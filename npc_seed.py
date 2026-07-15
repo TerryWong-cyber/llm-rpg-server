@@ -1,0 +1,135 @@
+"""Content-only demo NPC definitions.
+
+Add future NPCs in JSON, a CMS, or a database and pass them through the same
+repository interface.  No dialogue or combat code needs to change.
+"""
+
+from typing import List
+
+from npc_models import (
+    NPCBackstory,
+    NPCCombatProfile,
+    NPCCombatTrigger,
+    NPCDisposition,
+    NPCEquipment,
+    NPCLocation,
+    NPCProfile,
+    StoryHook,
+    TriggerCondition,
+)
+from world_repository import InMemoryWorldRepository
+
+
+def demo_npcs() -> List[NPCProfile]:
+    return [
+        NPCProfile(
+            npc_id="evelyn_mossmark",
+            name="伊芙琳·苔痕",
+            title="雾杉林的草药师",
+            gender="女",
+            race="林裔",
+            appearance="银灰短发，左眼覆着琥珀色单片镜，斗篷边缘总沾着新鲜苔藓。",
+            location=NPCLocation(region="雾杉林", terrain_id="1", landmark="倒下的巨杉旁"),
+            personality=["克制", "敏锐", "善待弱者", "不喜欢空口承诺"],
+            conversation_style="语速很慢，常以植物的习性比喻人的选择。",
+            backstory=NPCBackstory(
+                public_summary="曾是王都药师协会的年轻执事，七年前主动离开城市，在雾杉林救治旅人与猎人。",
+                personal_goal="找回失踪导师留下的菌种样本，并阻止它落入投机者手中。",
+                private_secret="她曾亲手销毁一批会诱发瘟疫的样本，却保留了唯一的培养记录。",
+            ),
+            equipment=NPCEquipment(weapon_id="6", armor_id="4", items={"1": 2, "5": 1}, valuables=["装有孢子粉的铜盒"]),
+            initial_disposition=NPCDisposition(affinity=12, trust=5, respect=0, hostility=0),
+            story_hooks=[
+                StoryHook(
+                    hook_id="evelyn_lost_spores",
+                    title="失落菌种",
+                    summary="伊芙琳愿意托付你寻找被走私者带离森林的孢子培养盒。",
+                    min_affinity=8,
+                    min_trust=5,
+                )
+            ],
+        ),
+        NPCProfile(
+            npc_id="darok_blacksalt",
+            name="达洛克·黑盐",
+            title="沙漠商道的走私者",
+            gender="男",
+            race="人类",
+            appearance="皮肤被风沙磨得粗粝，黑色头巾遮住半张脸，腰间挂着两把弯匕。",
+            location=NPCLocation(region="赤砂商道", terrain_id="5", landmark="倾倒的盐车后"),
+            personality=["多疑", "精于算计", "敬畏强者", "讨厌被揭穿"],
+            conversation_style="句子简短，习惯把每个问题反问回来。",
+            backstory=NPCBackstory(
+                public_summary="经营着一条不在地图上的商路，向边境聚落倒卖盐、药和来历不明的遗物。",
+                personal_goal="夺回被旧同伙藏起的货单，在买家与官兵找到它之前离开赤砂商道。",
+                private_secret="货单记录的不是违禁品，而是一批被当作货物转移的难民姓名。",
+            ),
+            equipment=NPCEquipment(weapon_id="2", armor_id="3", items={"4": 1, "1": 1}, valuables=["刻有黑盐印记的铜币"]),
+            combat=NPCCombatProfile(
+                character_id="2",
+                weapon_id="2",
+                armor_id="3",
+                item_id="4",
+                item_count=1,
+                threat=4,
+                tactics=["抢先施毒", "低血量时脱离", "用眩晕制造空档"],
+                arena="赤砂商道的断裂盐车旁",
+            ),
+            initial_disposition=NPCDisposition(affinity=-4, trust=-8, respect=0, hostility=18),
+            story_hooks=[
+                StoryHook(
+                    hook_id="darok_manifest",
+                    title="黑盐货单",
+                    summary="达洛克可能知道一份足以改变边境局势的货单下落。",
+                    min_affinity=-10,
+                    min_trust=-20,
+                )
+            ],
+            combat_triggers=[
+                NPCCombatTrigger(
+                    trigger_id="darok_defend_cargo",
+                    title="盐车旁的拔刀",
+                    intro="达洛克将双匕从腰间抽出：'再靠近一步，这趟生意就只剩尸体。'",
+                    conditions=[
+                        TriggerCondition(
+                            kind="message_contains",
+                            values=["交出货物", "交出货单", "抢劫", "滚开", "动手", "袭击"],
+                        ),
+                        TriggerCondition(kind="relationship_at_least", field="hostility", threshold=10),
+                    ],
+                )
+            ],
+        ),
+        NPCProfile(
+            npc_id="marin_redanvil",
+            name="玛琳·赤砧",
+            title="山道尽头的矮人工匠",
+            gender="女",
+            race="矮人",
+            appearance="赤褐长辫盘在后脑，前臂满是烫伤，护目镜上有一道明显裂纹。",
+            location=NPCLocation(region="断脊山道", terrain_id="2", landmark="废弃升降机前"),
+            personality=["直率", "好胜", "重视手艺", "嘴硬心软"],
+            conversation_style="说话像敲铁：短、响，偶尔夹一句不太高明的玩笑。",
+            backstory=NPCBackstory(
+                public_summary="她修复过边境大半的矿道设备，也因为拒绝向军团交出学徒而被逐出工坊。",
+                personal_goal="重启山道深处的古老熔炉，证明不依靠军团也能养活矿区。",
+                private_secret="裂纹护目镜来自她失踪的学徒；她相信对方仍困在封闭矿井。",
+            ),
+            equipment=NPCEquipment(weapon_id="1", armor_id="2", items={"3": 1}, valuables=["半成品的炉心钥匙"]),
+            initial_disposition=NPCDisposition(affinity=4, trust=0, respect=4, hostility=0),
+            story_hooks=[
+                StoryHook(
+                    hook_id="marin_furnace",
+                    title="复燃的古炉",
+                    summary="玛琳正在寻找能重新点燃古炉的耐热材料与可靠帮手。",
+                    min_affinity=3,
+                    min_trust=0,
+                )
+            ],
+        ),
+    ]
+
+
+def seed_demo_npcs(repository: InMemoryWorldRepository, overwrite: bool = False) -> List[NPCProfile]:
+    return [repository.register_npc(npc, overwrite=overwrite) for npc in demo_npcs()]
+
