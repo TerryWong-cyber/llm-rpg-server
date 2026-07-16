@@ -1,0 +1,349 @@
+{
+  "schema_version": "1.0",
+  "characters": {
+    "1": {
+      "id": 1,
+      "name": "重装骑士",
+      "hp": 100,
+      "mp": 30,
+      "str": 9,
+      "agi": 4,
+      "int": 3,
+      "desc": "血厚防高，精通近战物理压制。"
+    },
+    "2": {
+      "id": 2,
+      "name": "暗影刺客",
+      "hp": 60,
+      "mp": 50,
+      "str": 6,
+      "agi": 10,
+      "int": 5,
+      "desc": "身板脆弱，极高闪避与暴击率。"
+    },
+    "3": {
+      "id": 3,
+      "name": "秘法学者",
+      "hp": 50,
+      "mp": 120,
+      "str": 2,
+      "agi": 6,
+      "int": 10,
+      "desc": "以庞大蓝量驱动高额魔法爆发。"
+    },
+    "4": {
+      "id": 4,
+      "name": "神圣卫士",
+      "hp": 85,
+      "mp": 60,
+      "str": 7,
+      "agi": 4,
+      "int": 6,
+      "desc": "半坦半奶，攻守兼备。"
+    },
+    "5": {
+      "id": 5,
+      "name": "风行射手",
+      "hp": 70,
+      "mp": 45,
+      "str": 5,
+      "agi": 9,
+      "int": 4,
+      "desc": "游侠，行动敏捷，打断对手节奏。"
+    },
+    "6": {
+      "id": 6,
+      "name": "瘟疫萨满",
+      "hp": 65,
+      "mp": 80,
+      "str": 4,
+      "agi": 5,
+      "int": 8,
+      "desc": "精通巫术与剧毒，擅长消耗战。"
+    }
+  },
+  "weapons": {
+    "1": {
+      "id": 1,
+      "name": "精钢阔剑",
+      "base_dmg": 15,
+      "range": "近战",
+      "type": "phys",
+      "value": 40,
+      "desc": "重型剑，破甲良好。",
+      "skills": [
+        {
+          "id": "1",
+          "name": "重劈",
+          "cost": 5,
+          "multiplier": 1.5,
+          "desc": "造成150%物理伤害。"
+        }
+      ]
+    },
+    "2": {
+      "id": 2,
+      "name": "淬毒双匕",
+      "base_dmg": 8,
+      "range": "近战",
+      "type": "phys",
+      "value": 60,
+      "desc": "极速攻速，淬有剧毒。",
+      "skills": [
+        {
+          "id": "1",
+          "name": "毒刃投掷",
+          "cost": 10,
+          "multiplier": 1,
+          "desc": "附带中毒状态。",
+          "status_effect": "中毒"
+        }
+      ]
+    },
+    "3": {
+      "id": 3,
+      "name": "余烬法杖",
+      "base_dmg": 5,
+      "range": "远程",
+      "type": "magic",
+      "value": 80,
+      "desc": "蕴含火元素。",
+      "skills": [
+        {
+          "id": "1",
+          "name": "爆裂火球",
+          "cost": 20,
+          "multiplier": 2,
+          "desc": "造成200%火焰魔法伤害。"
+        }
+      ]
+    },
+    "4": {
+      "id": 4,
+      "name": "守护枪盾",
+      "base_dmg": 11,
+      "range": "近战",
+      "type": "phys",
+      "value": 50,
+      "desc": "塔盾与钢枪。",
+      "skills": [
+        {
+          "id": "1",
+          "name": "盾牌猛击",
+          "cost": 12,
+          "multiplier": 1.1,
+          "desc": "有机会使对手眩晕一回合。",
+          "status_effect": "眩晕"
+        }
+      ]
+    },
+    "5": {
+      "id": 5,
+      "name": "精灵长弓",
+      "base_dmg": 10,
+      "range": "远程",
+      "type": "phys",
+      "value": 70,
+      "desc": "轻巧的精灵长弓。",
+      "skills": [
+        {
+          "id": "1",
+          "name": "风之矢",
+          "cost": 15,
+          "multiplier": 1.3,
+          "desc": "贯穿箭矢。"
+        }
+      ]
+    },
+    "6": {
+      "id": 6,
+      "name": "凋零魔杖",
+      "base_dmg": 6,
+      "range": "远程",
+      "type": "magic",
+      "value": 90,
+      "desc": "带有诅咒的枯木短杖。",
+      "skills": [
+        {
+          "id": "1",
+          "name": "生命汲取",
+          "cost": 18,
+          "multiplier": 1.2,
+          "desc": "造成伤害并将50%转化为自身血量。",
+          "self_effect": "life_steal",
+          "self_effect_ratio": 0.5
+        }
+      ]
+    }
+  },
+  "armors": {
+    "0": {
+      "id": 0,
+      "name": "平民布衣",
+      "hp_bonus": 0,
+      "def_rate": 0.0,
+      "value": 0,
+      "desc": "没有任何额外防御力的粗布便服。"
+    },
+    "1": {
+      "id": 1,
+      "name": "平民布衣",
+      "hp_bonus": 0,
+      "def_rate": 0,
+      "value": 0,
+      "desc": "无特殊加成。"
+    },
+    "2": {
+      "id": 2,
+      "name": "秘银板甲",
+      "hp_bonus": 30,
+      "def_rate": 0.3,
+      "value": 50,
+      "desc": "物理减伤30%，略微降低敏捷。"
+    },
+    "3": {
+      "id": 3,
+      "name": "暗夜斗篷",
+      "hp_bonus": 10,
+      "def_rate": 0.1,
+      "value": 45,
+      "desc": "受伤害减10%，大幅提升闪避。"
+    },
+    "4": {
+      "id": 4,
+      "name": "星光法袍",
+      "hp_bonus": 5,
+      "def_rate": 0,
+      "value": 60,
+      "desc": "受魔伤减20%，法术判定大优势。"
+    },
+    "5": {
+      "id": 5,
+      "name": "龙鳞革甲",
+      "hp_bonus": 20,
+      "def_rate": 0.18,
+      "value": 75,
+      "desc": "全防，并提供部分环境免疫。"
+    },
+    "6": {
+      "id": 6,
+      "name": "虚空障壁",
+      "hp_bonus": 15,
+      "def_rate": 0.05,
+      "value": 90,
+      "desc": "受击时有概率偏斜完全免疫伤害。"
+    }
+  },
+  "items": {
+    "1": {
+      "id": 1,
+      "name": "特效治疗药水",
+      "type": "heal_hp",
+      "val": 40,
+      "value": 15,
+      "desc": "立即恢复 40 点 HP。"
+    },
+    "2": {
+      "id": 2,
+      "name": "浓缩魔力药水",
+      "type": "heal_mp",
+      "val": 50,
+      "value": 15,
+      "desc": "立即恢复 50 点 MP。"
+    },
+    "3": {
+      "id": 3,
+      "name": "烈火炸弹",
+      "type": "dmg",
+      "val": 25,
+      "value": 20,
+      "desc": "25点无视防御真伤。"
+    },
+    "4": {
+      "id": 4,
+      "name": "震荡手雷",
+      "type": "dmg",
+      "val": 15,
+      "value": 25,
+      "desc": "15点真伤，概率附加眩晕。"
+    },
+    "5": {
+      "id": 5,
+      "name": "万能抗毒丸",
+      "type": "heal_hp",
+      "val": 15,
+      "value": 10,
+      "desc": "恢复15HP，并解除身上一切异常。"
+    },
+    "6": {
+      "id": 6,
+      "name": "龙血炼金酿",
+      "type": "heal_both",
+      "val": 25,
+      "value": 30,
+      "desc": "同时恢复 25 生命值与 25 魔力。"
+    }
+  },
+  "resources": {
+    "mat_1": {
+      "id": "mat_1",
+      "name": "原木",
+      "emoji": "🪵",
+      "desc": "基础建筑与打造材料",
+      "value": 5
+    },
+    "mat_2": {
+      "id": "mat_2",
+      "name": "石块",
+      "emoji": "🪨",
+      "desc": "坚硬的矿石",
+      "value": 5
+    },
+    "mat_3": {
+      "id": "mat_3",
+      "name": "发光蘑菇",
+      "emoji": "🍄",
+      "desc": "炼金绝佳材料",
+      "value": 15
+    },
+    "mat_4": {
+      "id": "mat_4",
+      "name": "鲜鱼",
+      "emoji": "🐟",
+      "desc": "恢复体力的食材",
+      "value": 10
+    },
+    "mat_5": {
+      "id": "mat_5",
+      "name": "铁矿",
+      "emoji": "⛏️",
+      "desc": "锻造武器的刚需",
+      "value": 20
+    },
+    "mat_6": {
+      "id": "mat_6",
+      "name": "草药",
+      "emoji": "🌿",
+      "desc": "制作治疗药水",
+      "value": 8
+    }
+  },
+  "environments": [
+    "【泥泞沼泽】：降低所有敏捷动作收益，重剑类大开大合武器更容易失去重心。",
+    "【雷暴废墟】：充斥着魔法乱流。每次使用魔法技能时，可能造成额外爆烈判定，也可能哑火。",
+    "【平原决斗场】：毫无遮挡开阔地，远程物理攻击难以被闪避，双方无任何环境掩体阻挡。",
+    "【圣光神殿】：所有治疗和恢复类效果判定翻倍，黑暗、剧毒或诅咒系技能判定受压制。",
+    "【极寒雪原】：每次物理攻击都会被严寒阻碍降低敏捷判定，且所有火系魔法伤害降低，冰系法术判定大成功率提升。",
+    "【炽热火山】：回合末全场高温炙烤。除非穿着龙鳞革甲，否则每隔两回合会受到一次【烧伤】热能判定。"
+  ],
+  "rules": {
+    "phys_attr_coeff": 1.5,
+    "magic_attr_coeff": 1.5,
+    "status_dmg_per_turn": 6,
+    "normal_effectiveness": 5,
+    "defended_effectiveness": 2,
+    "min_gold_drop": 30,
+    "max_gold_drop": 60,
+    "initial_gold": 100
+  }
+}

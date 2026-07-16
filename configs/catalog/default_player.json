@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "fallback_name": "无名小卒",
+  "character_id": "1",
+  "inventory": {
+    "weapons": ["1"],
+    "armors": ["0"],
+    "items": {"1": 3},
+    "materials": {}
+  }
+}
+

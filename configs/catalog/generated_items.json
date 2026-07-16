@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "combat_stat_limits": {
+    "weapon": [10, 40],
+    "armor": [10, 50],
+    "item": [20, 100]
+  },
+  "weapon": {
+    "range": "近战",
+    "damage_type": "phys",
+    "skill": {
+      "id": "1",
+      "name": "造物打击",
+      "cost": 10,
+      "multiplier": 1.2,
+      "desc": "自制专属战技"
+    }
+  },
+  "armor": {"def_rate": 0.15},
+  "item": {"effect_type": "heal_hp"},
+  "material": {"emoji": "✨"}
+}
+

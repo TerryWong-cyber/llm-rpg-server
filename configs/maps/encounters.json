@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "encounters": [
+    {
+      "encounter_id": "encounter.evelyn.fallen_fir",
+      "npc_id": "evelyn_mossmark",
+      "locations": {"region_ids": ["mistwood"], "terrain_ids": [], "landmark_ids": ["fallen_fir"]},
+      "trigger": "on_enter_cell",
+      "chance": 1.0,
+      "priority": 100,
+      "conditions": [],
+      "cooldown_seconds": 0,
+      "repeatable": false,
+      "story_hook_id": "evelyn_lost_spores"
+    },
+    {
+      "encounter_id": "encounter.darok.salt_road",
+      "npc_id": "darok_blacksalt",
+      "locations": {"region_ids": ["western_desert"], "terrain_ids": [], "landmark_ids": ["salt_road"]},
+      "trigger": "on_enter_cell",
+      "chance": 0.65,
+      "priority": 80,
+      "conditions": [{"kind": "relationship_at_most", "field": "affinity", "threshold": 20}],
+      "cooldown_seconds": 86400,
+      "repeatable": true,
+      "story_hook_id": "darok_manifest"
+    },
+    {
+      "encounter_id": "encounter.marin.abandoned_lift",
+      "npc_id": "marin_redanvil",
+      "locations": {"region_ids": ["broken_spine"], "terrain_ids": [], "landmark_ids": ["abandoned_lift"]},
+      "trigger": "on_enter_cell",
+      "chance": 1.0,
+      "priority": 90,
+      "conditions": [],
+      "cooldown_seconds": 0,
+      "repeatable": false,
+      "story_hook_id": "marin_furnace"
+    }
+  ]
+}
