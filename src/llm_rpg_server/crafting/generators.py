@@ -4,35 +4,38 @@ from typing import Any, Protocol
 
 from llm_rpg_server.shared.config import ContentProvider, Settings
 
-from .models import CraftNarrative
+from .models import CraftDecision
 
 
-class CraftNarrativeGenerator(Protocol):
-    def generate(self, first: dict[str, Any], second: dict[str, Any]) -> CraftNarrative: ...
+class CraftDecisionGenerator(Protocol):
+    def evaluate(self, first: dict[str, Any], second: dict[str, Any], result_type: str) -> CraftDecision: ...
 
 
 class ItemImageGenerator(Protocol):
     def generate(self, name: str, description: str) -> str: ...
 
 
-class LLMCraftNarrativeGenerator:
+class LLMCraftDecisionGenerator:
     def __init__(self, content: ContentProvider, llm: Any):
         self.content = content
         self.llm = llm
 
-    def generate(self, first: dict[str, Any], second: dict[str, Any]) -> CraftNarrative:
+    def evaluate(self, first: dict[str, Any], second: dict[str, Any], result_type: str) -> CraftDecision:
         from langchain_core.prompts import ChatPromptTemplate
 
         definition = self.content.prompt("crafting")
         prompt = ChatPromptTemplate.from_messages([("system", definition.system), ("human", definition.user)])
-        chain = prompt | self.llm.with_structured_output(CraftNarrative)
+        chain = prompt | self.llm.with_structured_output(CraftDecision)
         return chain.invoke({
+            "item1_type": first["_crafting_type"],
             "item1_name": first["name"],
             "item1_description": first.get("desc", ""),
             "item1_value": first.get("value", 0),
+            "item2_type": second["_crafting_type"],
             "item2_name": second["name"],
             "item2_description": second.get("desc", ""),
             "item2_value": second.get("value", 0),
+            "result_type": result_type,
         })
 
 
@@ -57,4 +60,3 @@ class OpenAIItemImageGenerator:
             return response.data[0].url or ""
         except Exception:
             return self.content.text("crafting.placeholder_url", name=name)
-

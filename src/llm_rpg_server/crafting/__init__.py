@@ -1,13 +1,16 @@
-from .generators import LLMCraftNarrativeGenerator, OpenAIItemImageGenerator
-from .models import CraftResult, ItemReference
+from .generators import LLMCraftDecisionGenerator, OpenAIItemImageGenerator
+from .models import CraftAttempt, CraftDecision, CraftResult, ItemReference, RecipeRecord
 from .repository import InMemoryRecipeRepository
 from .service import CraftingService
 
 __all__ = [
+    "CraftAttempt",
+    "CraftDecision",
     "CraftResult",
     "CraftingService",
     "InMemoryRecipeRepository",
     "ItemReference",
-    "LLMCraftNarrativeGenerator",
+    "LLMCraftDecisionGenerator",
     "OpenAIItemImageGenerator",
+    "RecipeRecord",
 ]

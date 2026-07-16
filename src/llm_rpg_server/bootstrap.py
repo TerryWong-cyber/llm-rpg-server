@@ -9,7 +9,7 @@ from llm_rpg_server.combat import CombatEngine, CombatSessionService, InMemoryRo
 from llm_rpg_server.crafting import (
     CraftingService,
     InMemoryRecipeRepository,
-    LLMCraftNarrativeGenerator,
+    LLMCraftDecisionGenerator,
     OpenAIItemImageGenerator,
 )
 from llm_rpg_server.exploration import ExplorationService
@@ -64,7 +64,7 @@ def build_container() -> AppContainer:
         catalog,
         recipes,
         content,
-        LLMCraftNarrativeGenerator(content, llm),
+        LLMCraftDecisionGenerator(content, llm),
         OpenAIItemImageGenerator(content, settings),
     )
     rooms = InMemoryRoomRepository()

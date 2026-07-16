@@ -41,6 +41,14 @@ The legacy command `uvicorn server:app_api --reload` remains available through t
 
 Run `python scripts/validate_content.py` after changing content. The provider boundary can later be backed by Langfuse or another content API without changing domain services.
 
+## Crafting rules
+
+Crafting uses a deterministic rule layer around a structured LLM decision. The server validates ownership, material eligibility, equipment retention, and recursive ingredient ancestry before asking the model to judge whether the combination has a coherent transformation path. Successful results expose `can_be_ingredient`; generated items also retain internal ancestry metadata so they cannot be combined with any direct or transitive ingredient.
+
+Both successful and failed unordered ingredient pairs are stored in the shared recipe repository. Failed attempts do not consume inventory and reuse the recorded reason on later attempts, avoiding another model call. `GET /api/game/recipes` returns both outcomes through `success`, nullable `result`, and `failure_reason`. The current repository is process-local, matching the existing in-memory player and catalog lifecycle.
+
+Generated materials and consumables use a stable ID derived from the unordered recipe key, so repeated crafting increases one inventory quantity. Generated weapons and armor keep unique instance IDs in preparation for instance state such as durability.
+
 ## Exploration and encounters
 
 Map dimensions are configured in `configs/maps/world.json`. The initial presets are:

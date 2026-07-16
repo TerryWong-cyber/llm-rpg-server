@@ -38,15 +38,26 @@ def sell_item(request: TradeRequest, container: Container):
 
 @router.post("/craft")
 def craft_item(request: CraftRequest, container: Container):
-    result = container.crafting.craft(
+    attempt = container.crafting.craft(
         request.player_id,
         ItemReference(item_type=request.item1_type, item_id=request.item1_id),
         ItemReference(item_type=request.item2_type, item_id=request.item2_id),
     )
     profile = container.players.get(request.player_id)
+    if not attempt.success:
+        return {
+            "status": "failed",
+            "result": None,
+            "failure_reason": attempt.failure_reason,
+            "profile": profile.model_dump(mode="json"),
+        }
+    result = attempt.result
+    if result is None:
+        raise RuntimeError(container.content.text("errors.craft.failed"))
     return {
         "status": "success",
         "result": result.public_dict(),
+        "failure_reason": "",
         "profile": profile.model_dump(mode="json"),
     }
 

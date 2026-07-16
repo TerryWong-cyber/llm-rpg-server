@@ -42,7 +42,9 @@
       },
       "craft": {
         "failed": "炼金流程执行失败",
-        "same_equipment": "同名装备数量不足"
+        "same_equipment": "同名装备数量不足",
+        "ingredient_forbidden": "该物品已是完整成品，不能继续作为合成原料",
+        "ancestor_forbidden": "合成产物不能与其任一级原材料再次合成"
       },
       "npc": {
         "not_found": "NPC 不存在",
