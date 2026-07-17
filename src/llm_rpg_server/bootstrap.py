@@ -13,6 +13,7 @@ from llm_rpg_server.crafting import (
     OpenAIItemImageGenerator,
 )
 from llm_rpg_server.exploration import ExplorationService
+from llm_rpg_server.monsters import MonsterCatalog
 from llm_rpg_server.npcs import InMemoryWorldRepository, NPCDialogueService, NPCInteractionService
 from llm_rpg_server.npcs.loader import seed_npcs
 from llm_rpg_server.players import EconomyService, InMemoryPlayerRepository, PlayerService
@@ -20,6 +21,7 @@ from llm_rpg_server.shared.config import LocalContentProvider, Settings
 from llm_rpg_server.shared.llm import create_llm
 from llm_rpg_server.shared.observability import Observability
 from llm_rpg_server.world import EncounterService
+from llm_rpg_server.world.events import WorldEventCoordinator
 
 
 @dataclass(slots=True)
@@ -34,6 +36,8 @@ class AppContainer:
     npc_interactions: NPCInteractionService
     exploration: ExplorationService
     encounters: EncounterService
+    monsters: MonsterCatalog
+    world_events: WorldEventCoordinator
     recipes: InMemoryRecipeRepository
     crafting: CraftingService
     rooms: InMemoryRoomRepository
@@ -56,8 +60,10 @@ def build_container() -> AppContainer:
     npc_dialogue = NPCDialogueService(content, llm)
     npc_interactions = NPCInteractionService(world_repository, npc_dialogue, content)
     exploration = ExplorationService(players, catalog, content)
-    encounters = EncounterService(content, npc_interactions)
+    monsters = MonsterCatalog(content, catalog)
+    encounters = EncounterService(content, npc_interactions, clock=exploration.clock)
     exploration.set_encounter_resolver(encounters)
+    economy.set_access_policy(exploration)
     recipes = InMemoryRecipeRepository()
     crafting = CraftingService(
         players,
@@ -78,7 +84,10 @@ def build_container() -> AppContainer:
         npc_interactions,
         content,
         observability,
+        monsters,
     )
+    world_events = WorldEventCoordinator(exploration, npc_interactions, monsters, combat)
+    exploration.set_event_participant_resolver(world_events)
     container = AppContainer(
         settings=settings,
         content=content,
@@ -90,6 +99,8 @@ def build_container() -> AppContainer:
         npc_interactions=npc_interactions,
         exploration=exploration,
         encounters=encounters,
+        monsters=monsters,
+        world_events=world_events,
         recipes=recipes,
         crafting=crafting,
         rooms=rooms,

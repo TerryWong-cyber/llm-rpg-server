@@ -25,6 +25,10 @@ class GameRoom:
     npc_id: str | None = None
     npc_trigger_id: str | None = None
     npc_outcome_recorded: bool = False
+    monster_id: str | None = None
+    event_id: str | None = None
+    opponent_outcome_recorded: bool = False
+    reward_summary: str = ""
     action_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     state_lock: RLock = field(default_factory=RLock)
 
@@ -73,6 +77,21 @@ class InMemoryRoomRepository:
                 is_started=True,
                 npc_id=npc_id,
                 npc_trigger_id=trigger_id,
+            )
+            self._rooms[room_id] = room
+            return room
+
+    def create_monster(self, player_id: str, monster_id: str, event_id: str) -> GameRoom:
+        with self._lock:
+            room_id = self._next_id()
+            room = GameRoom(
+                room_id=room_id,
+                p1_id=player_id,
+                p2_id=f"MONSTER_{monster_id}",
+                mode="PvE",
+                is_started=True,
+                monster_id=monster_id,
+                event_id=event_id,
             )
             self._rooms[room_id] = room
             return room

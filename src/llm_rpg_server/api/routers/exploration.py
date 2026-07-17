@@ -5,7 +5,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from llm_rpg_server.api.dependencies import container_from_request
-from llm_rpg_server.api.schemas import CellRequest, EnterMapRequest
+from llm_rpg_server.api.schemas import (
+    CellRequest,
+    DirectionRequest,
+    EatRequest,
+    EnterMapRequest,
+    EventActionRequest,
+    PlayerRequest,
+)
 from llm_rpg_server.bootstrap import AppContainer
 from llm_rpg_server.exploration import MapInstance
 
@@ -19,6 +26,17 @@ def map_templates(container: Container):
         "templates": container.exploration.list_templates(),
         "worlds": container.exploration.worlds,
         "regions": container.exploration.regions,
+        "world_grid": container.exploration.world_overview(),
+        "world_time": container.exploration.time_snapshot().model_dump(mode="json"),
+    }
+
+
+@router.get("/time")
+def world_time(container: Container):
+    snapshot = container.exploration.time_snapshot()
+    return {
+        "world_time": snapshot.model_dump(mode="json"),
+        "label": container.exploration.clock.label(snapshot),
     }
 
 
@@ -37,6 +55,14 @@ def enter_map(request: EnterMapRequest, container: Container):
 def move(request: CellRequest, container: Container):
     current, encounter = container.exploration.move(request.player_id, request.cell_id)
     return _map_response(container, request.player_id, current, encounter)
+
+
+@router.post("/move-direction")
+def move_direction(request: DirectionRequest, container: Container):
+    current, encounter, transition = container.exploration.move_direction(
+        request.player_id, request.direction
+    )
+    return _map_response(container, request.player_id, current, encounter, transition=transition)
 
 
 @router.post("/gather")
@@ -64,23 +90,76 @@ def gather(request: CellRequest, container: Container):
         importance=2 if loot else 1,
     )
     profile = container.players.get(request.player_id)
-    return {
+    response = _map_response(container, request.player_id, current, encounter)
+    response.update({
         "status": "success",
         "msg": message,
         "loot": loot,
         "cell_id": request.cell_id,
-        "inventory_materials": profile.inventory.materials,
-        "map": current.model_dump(mode="json"),
-        "encounter": encounter.model_dump(mode="json") if encounter else None,
-    }
+    })
+    return response
 
 
-def _map_response(container: AppContainer, player_id: str, current: MapInstance, encounter):
+@router.post("/eat")
+def eat(request: EatRequest, container: Container):
+    profile = container.exploration.eat(request.player_id, request.item_id)
+    current = MapInstance.model_validate(profile.current_map) if profile.current_map else None
+    if current is None:
+        return {"status": "success", "profile": profile.model_dump(mode="json")}
+    response = _map_response(container, request.player_id, current, None)
+    response["status"] = "success"
+    response["profile"] = profile.model_dump(mode="json")
+    return response
+
+
+@router.post("/camp")
+def camp(request: PlayerRequest, container: Container):
+    profile = container.exploration.camp(request.player_id)
+    current = MapInstance.model_validate(profile.current_map)
+    response = _map_response(container, request.player_id, current, None)
+    response["status"] = "success"
+    response["profile"] = profile.model_dump(mode="json")
+    return response
+
+
+@router.post("/event-action")
+def event_action(request: EventActionRequest, container: Container):
+    outcome = container.world_events.perform(
+        request.player_id,
+        request.event_id,
+        request.action_id,
+    )
+    response = _map_response(container, request.player_id, outcome.current, None)
+    response["interaction"] = outcome.interaction
+    if outcome.combat_room:
+        room = outcome.combat_room
+        response["combat"] = {
+            "status": "success",
+            "room_id": room.room_id,
+            "websocket_path": f"/ws/room/{room.room_id}/{request.player_id}",
+            "snapshot": container.combat.snapshot(room),
+        }
+    else:
+        response["combat"] = None
+    return response
+
+
+def _map_response(
+    container: AppContainer,
+    player_id: str,
+    current: MapInstance,
+    encounter,
+    *,
+    transition=None,
+):
     profile = container.players.get(player_id)
     cells = []
     for cell in current.cells:
         payload = cell.model_dump(mode="json")
         payload["is_gathered"] = payload["gathered"]
+        payload["active_event_ids"] = container.exploration.active_event_ids(
+            profile, current, cell
+        )
         cells.append(payload)
     return {
         "map": current.model_dump(mode="json"),
@@ -88,5 +167,23 @@ def _map_response(container: AppContainer, player_id: str, current: MapInstance,
         "terrains_meta": container.exploration.terrains,
         "resources_meta": container.catalog.resources,
         "inventory_materials": profile.inventory.materials,
+        "player": {
+            "stamina": profile.stamina,
+            "max_stamina": profile.max_stamina,
+            "inventory_items": profile.inventory.items,
+            "last_camped_game_day": profile.last_camped_game_day,
+        },
+        "world": container.exploration.world_overview(),
+        "world_time": container.exploration.time_snapshot().model_dump(mode="json"),
+        "actions": {
+            key: value.model_dump(mode="json")
+            for key, value in container.exploration.actions(player_id).items()
+        },
+        "event": (
+            event.model_dump(mode="json")
+            if (event := container.exploration.pop_latest_event(player_id)) else None
+        ),
+        "event_log": [entry.model_dump(mode="json") for entry in profile.world_event_log],
+        "transition": transition.model_dump(mode="json") if transition else None,
         "encounter": encounter.model_dump(mode="json") if encounter else None,
     }

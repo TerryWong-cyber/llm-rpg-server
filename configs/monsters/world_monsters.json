@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "monsters": [
+    {
+      "monster_id": "grave_wraith", "name": "墓园游魂", "title": "被遗忘姓名束缚的亡魂", "description": "它在墓碑间重复寻找自己的名字，靠近活人的温度会使它变得狂躁。", "emoji": "👻", "image_url": "/assets/vendor/game-icons/lorc/ghost.svg", "habitats": ["graveyard"], "tags": ["undead", "night", "spirit"],
+      "stats": {"hp": 58, "mp": 90, "strength": 2, "agility": 6, "intelligence": 9},
+      "equipment": {"weapon_id": "6", "weapon_name": "哀恸触须", "armor_id": "6", "armor_name": "幽魂残衣", "item_id": null, "item_count": 0},
+      "combat": {"threat": 5, "tactics": ["汲取生命", "施加恐惧", "回避物理攻击"], "arena": "月光笼罩的墓园", "forced": false},
+      "gold_min": 3, "gold_max": 9, "drops": [{"item_type": "material", "item_id": "mat_37", "chance": 0.75, "minimum": 1, "maximum": 2}, {"item_type": "material", "item_id": "mat_38", "chance": 0.22, "minimum": 1, "maximum": 1}]
+    },
+    {
+      "monster_id": "hibernating_bear", "name": "冬眠巨熊", "title": "被惊醒的洞穴霸主", "description": "脂肪厚实的成年巨熊，冬眠期间本不主动攻击，但突然惊醒时极其危险。", "emoji": "🐻", "image_url": "/assets/vendor/game-icons/lorc/crossed-bones.svg", "habitats": ["cave", "winter"], "tags": ["beast", "large", "winter"],
+      "stats": {"hp": 145, "mp": 15, "strength": 10, "agility": 3, "intelligence": 2},
+      "equipment": {"weapon_id": "1", "weapon_name": "巨熊利爪", "armor_id": "5", "armor_name": "厚重熊皮", "item_id": null, "item_count": 0},
+      "combat": {"threat": 7, "tactics": ["重击", "扑倒", "低血量狂暴"], "arena": "堆满旧骨的冬眠兽穴", "forced": false},
+      "gold_min": 0, "gold_max": 2, "drops": [{"item_type": "material", "item_id": "mat_17", "chance": 1.0, "minimum": 2, "maximum": 4}, {"item_type": "material", "item_id": "mat_18", "chance": 0.65, "minimum": 1, "maximum": 2}]
+    },
+    {
+      "monster_id": "mist_wolf_pack", "name": "雾杉狼群", "title": "在薄雾中围猎的灰狼", "description": "三到五只灰狼组成的小型猎群，擅长轮流试探并截断退路。", "emoji": "🐺", "image_url": "/assets/vendor/game-icons/delapouite/animal-hide.svg", "habitats": ["forest", "plains"], "tags": ["beast", "pack", "night"],
+      "stats": {"hp": 82, "mp": 25, "strength": 6, "agility": 9, "intelligence": 3},
+      "equipment": {"weapon_id": "2", "weapon_name": "撕咬与围猎", "armor_id": "3", "armor_name": "灰狼皮毛", "item_id": null, "item_count": 0},
+      "combat": {"threat": 4, "tactics": ["抢先突袭", "造成流血", "包抄虚弱目标"], "arena": "薄雾笼罩的林间空地", "forced": true},
+      "gold_min": 0, "gold_max": 3, "drops": [{"item_type": "material", "item_id": "mat_18", "chance": 0.85, "minimum": 1, "maximum": 3}, {"item_type": "material", "item_id": "mat_17", "chance": 0.7, "minimum": 1, "maximum": 2}]
+    },
+    {
+      "monster_id": "marsh_wisp", "name": "银沼鬼火", "title": "引人走向深水的磷光精怪", "description": "它模仿营火和灯笼的颜色，引诱疲惫旅人踏入没有底的泥潭。", "emoji": "🟢", "image_url": "/assets/vendor/game-icons/delapouite/fire-gem.svg", "habitats": ["swamp"], "tags": ["spirit", "arcane", "night"],
+      "stats": {"hp": 46, "mp": 105, "strength": 1, "agility": 8, "intelligence": 9},
+      "equipment": {"weapon_id": "3", "weapon_name": "沼泽磷火", "armor_id": "6", "armor_name": "无形光壳", "item_id": null, "item_count": 0},
+      "combat": {"threat": 5, "tactics": ["远程灼烧", "制造幻觉", "吸收魔力"], "arena": "银苇沼泽的深水洼地", "forced": false},
+      "gold_min": 2, "gold_max": 7, "drops": [{"item_type": "material", "item_id": "mat_7", "chance": 0.8, "minimum": 1, "maximum": 2}, {"item_type": "material", "item_id": "mat_38", "chance": 0.18, "minimum": 1, "maximum": 1}]
+    },
+    {
+      "monster_id": "reef_crab", "name": "礁甲巨蟹", "title": "占据潮池的坚壳掠食者", "description": "甲壳长满珊瑚与藤壶，钳击足以折断普通木盾。", "emoji": "🦀", "image_url": "/assets/vendor/game-icons/lorc/crab.svg", "habitats": ["coast", "river"], "tags": ["aquatic", "armored"],
+      "stats": {"hp": 112, "mp": 18, "strength": 8, "agility": 3, "intelligence": 1},
+      "equipment": {"weapon_id": "4", "weapon_name": "碎甲巨钳", "armor_id": "2", "armor_name": "珊瑚甲壳", "item_id": null, "item_count": 0},
+      "combat": {"threat": 5, "tactics": ["高防御", "钳制", "横向冲撞"], "arena": "退潮后的嶙峋礁滩", "forced": false},
+      "gold_min": 0, "gold_max": 4, "drops": [{"item_type": "material", "item_id": "mat_26", "chance": 1.0, "minimum": 1, "maximum": 3}, {"item_type": "material", "item_id": "mat_27", "chance": 0.16, "minimum": 1, "maximum": 1}]
+    },
+    {
+      "monster_id": "ash_salamander", "name": "灰烬火蜥", "title": "在熔岩裂缝中蜕皮的火兽", "description": "它的鳞片储存地火，受到威胁时会喷出夹杂火星的灼热烟雾。", "emoji": "🦎", "image_url": "/assets/vendor/game-icons/lorc/volcano.svg", "habitats": ["volcanic"], "tags": ["beast", "fire", "elemental"],
+      "stats": {"hp": 96, "mp": 70, "strength": 6, "agility": 6, "intelligence": 4},
+      "equipment": {"weapon_id": "3", "weapon_name": "熔火吐息", "armor_id": "5", "armor_name": "耐热火鳞", "item_id": null, "item_count": 0},
+      "combat": {"threat": 6, "tactics": ["火焰喷吐", "灼烧", "藏入烟幕"], "arena": "灰烬边境的熔岩裂谷", "forced": true},
+      "gold_min": 1, "gold_max": 6, "drops": [{"item_type": "material", "item_id": "mat_36", "chance": 0.9, "minimum": 1, "maximum": 2}, {"item_type": "material", "item_id": "mat_23", "chance": 0.5, "minimum": 1, "maximum": 2}]
+    },
+    {
+      "monster_id": "frost_revenant", "name": "霜骨亡兵", "title": "守卫冻土古道的无眠尸骸", "description": "冰晶填满它空洞的胸腔，生前最后一道军令仍驱使它攻击越界者。", "emoji": "💀", "image_url": "/assets/vendor/game-icons/lorc/crossed-bones.svg", "habitats": ["snow", "mountain"], "tags": ["undead", "ice", "armored"],
+      "stats": {"hp": 105, "mp": 55, "strength": 7, "agility": 4, "intelligence": 5},
+      "equipment": {"weapon_id": "4", "weapon_name": "覆霜旧枪", "armor_id": "2", "armor_name": "冻裂军铠", "item_id": null, "item_count": 0},
+      "combat": {"threat": 6, "tactics": ["盾击", "冻结", "守卫阵地"], "arena": "霜冠冻土的废弃古道", "forced": true},
+      "gold_min": 8, "gold_max": 18, "drops": [{"item_type": "material", "item_id": "mat_35", "chance": 0.78, "minimum": 1, "maximum": 2}, {"item_type": "material", "item_id": "mat_17", "chance": 0.65, "minimum": 1, "maximum": 2}]
+    },
+    {
+      "monster_id": "cave_goblin", "name": "洞穴拾荒地精", "title": "在废矿中埋伏旅人的掠夺者", "description": "它用矿渣和兽骨拼装武器，会优先抢夺发光、金属或能入口的东西。", "emoji": "👺", "image_url": "/assets/vendor/game-icons/delapouite/mine-wagon.svg", "habitats": ["cave", "mine"], "tags": ["humanoid", "scavenger"],
+      "stats": {"hp": 68, "mp": 32, "strength": 5, "agility": 7, "intelligence": 4},
+      "equipment": {"weapon_id": "2", "weapon_name": "矿渣短刀", "armor_id": "3", "armor_name": "拼接兽皮", "item_id": "1", "item_count": 1},
+      "combat": {"threat": 3, "tactics": ["伏击", "投掷碎石", "受伤后喝药"], "arena": "岔路密布的废弃矿洞", "forced": false},
+      "gold_min": 7, "gold_max": 16, "drops": [{"item_type": "material", "item_id": "mat_2", "chance": 0.7, "minimum": 1, "maximum": 2}, {"item_type": "item", "item_id": "1", "chance": 0.2, "minimum": 1, "maximum": 1}]
+    },
+    {
+      "monster_id": "ruin_sentinel", "name": "遗迹守卫构装体", "title": "仍在执行失落协议的石铁机械", "description": "胸腔中的符文核心忽明忽暗，它无法辨认现今任何王国的通行印记。", "emoji": "🗿", "image_url": "/assets/vendor/game-icons/lorc/rune-stone.svg", "habitats": ["ruin"], "tags": ["construct", "arcane", "ancient"],
+      "stats": {"hp": 132, "mp": 65, "strength": 9, "agility": 2, "intelligence": 6},
+      "equipment": {"weapon_id": "4", "weapon_name": "符文重臂", "armor_id": "6", "armor_name": "石铁外壳", "item_id": null, "item_count": 0},
+      "combat": {"threat": 8, "tactics": ["蓄力重击", "魔力屏障", "锁定入侵者"], "arena": "布满断柱的古代中庭", "forced": true},
+      "gold_min": 16, "gold_max": 30, "drops": [{"item_type": "material", "item_id": "mat_39", "chance": 0.9, "minimum": 1, "maximum": 2}, {"item_type": "material", "item_id": "mat_38", "chance": 0.35, "minimum": 1, "maximum": 1}]
+    }
+  ]
+}

@@ -6,6 +6,13 @@ def test_catalog_has_starter_armor(catalog):
     assert "0" in catalog.armors
 
 
+def test_catalog_has_a_broad_world_resource_pool(catalog):
+    assert len(catalog.resources) >= 40
+    assert {item.get("category") for item in catalog.resources.values()} >= {
+        "wood", "plant", "mineral", "creature", "aquatic", "arcane", "regional", "relic"
+    }
+
+
 def test_catalog_exposes_curated_game_icons(catalog):
     public = catalog.public_view()
     expected = {

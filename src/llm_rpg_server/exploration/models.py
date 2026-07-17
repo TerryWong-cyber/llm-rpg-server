@@ -20,15 +20,22 @@ class MapTemplate(BaseModel):
     scale: MapScale
     width: int | None = Field(default=None, ge=1, le=200)
     height: int | None = Field(default=None, ge=1, le=200)
-    terrain_weights: dict[str, float]
+    terrain_weights: dict[str, float] = Field(default_factory=dict)
+    terrain_counts: dict[str, int] = Field(default_factory=dict)
+    primary_terrain_id: str | None = None
     landmarks: dict[int, str] = Field(default_factory=dict)
+    landmark_terrains: dict[int, str] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_custom_size(self) -> "MapTemplate":
         if self.scale is MapScale.CUSTOM and (self.width is None or self.height is None):
             raise ValueError("Custom map templates require width and height")
-        if not self.terrain_weights or sum(self.terrain_weights.values()) <= 0:
-            raise ValueError("Map templates require positive terrain weights")
+        if not self.terrain_counts and (
+            not self.terrain_weights or sum(self.terrain_weights.values()) <= 0
+        ):
+            raise ValueError("Map templates require terrain counts or positive terrain weights")
+        if any(value < 0 for value in self.terrain_counts.values()):
+            raise ValueError("Terrain counts cannot be negative")
         return self
 
 
@@ -39,8 +46,16 @@ class MapCell(BaseModel):
     terrain_id: str
     landmark_id: str | None = None
     passable: bool = True
+    terrain_category: str = "ordinary"
+    tags: list[str] = Field(default_factory=list)
+    gatherable: bool = False
+    campable: bool = False
+    movement_cost: int = Field(default=1, ge=0)
+    npc_chance_multiplier: float = Field(default=1.0, ge=0)
+    interaction_ids: list[str] = Field(default_factory=list)
     explored: bool = False
     gathered: bool = False
+    triggered_event_ids: list[str] = Field(default_factory=list)
 
 
 class MapInstance(BaseModel):
@@ -53,8 +68,49 @@ class MapInstance(BaseModel):
     height: int
     seed: int
     config_version: str
+    world_x: int = 0
+    world_y: int = 0
+    world_width: int = 1
+    world_height: int = 1
     current_cell_id: int = 0
     cells: list[MapCell]
+
+
+class MapTransition(BaseModel):
+    from_region_id: str
+    to_region_id: str
+    direction: Literal["up", "down", "left", "right"]
+
+
+class WorldEventAction(BaseModel):
+    action_id: str
+    label: str
+    style: Literal["primary", "quiet", "danger"] = "quiet"
+    kind: Literal["narrative", "open_npc", "start_quest", "npc_combat", "monster_combat"] = "narrative"
+    forced: bool = False
+
+
+class WorldEventResult(BaseModel):
+    event_id: str
+    kind: Literal["flavor", "discovery", "danger", "combat_hint", "settlement"]
+    title: str
+    description: str
+    emoji: str = "✦"
+    trigger: str
+    state: Literal["triggered", "active", "expired", "action"] = "triggered"
+    actions: list[WorldEventAction] = Field(default_factory=list)
+    trigger_scope: Literal["cell", "region", "world"] = "cell"
+    trigger_count: int = Field(default=1, ge=0)
+    max_triggers: int | None = Field(default=None, ge=1)
+    cell_id: int | None = None
+    participant: dict | None = None
+    blocks_movement: bool = False
+
+
+class ActionAvailability(BaseModel):
+    available: bool
+    reason: str = ""
+    cost: int = Field(default=0, ge=0)
 
 
 class EncounterLocation(BaseModel):
@@ -71,6 +127,8 @@ class EncounterCondition(BaseModel):
         "relationship_at_most",
         "relationship_flag",
         "memory_tag",
+        "time_period",
+        "season",
     ]
     field: Literal["affinity", "trust", "respect", "hostility"] | None = None
     threshold: int | None = None

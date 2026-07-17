@@ -170,6 +170,8 @@ class CombatEngine:
         message = self.content.text("combat.settlement.victory")
         if state.get("game_mode") == "PvP":
             return {"messages": [AIMessage(content=message + self.content.text("combat.settlement.pvp"))]}
+        if state.get("reward_policy") == "configured_opponent":
+            return {"messages": [AIMessage(content=message)]}
         thread_id = config.get("configurable", {}).get("thread_id", "unknown")
         awarded, reward = self.players.update_once(
             state["player_id"],

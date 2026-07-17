@@ -25,7 +25,21 @@
         "invalid_template": "未知的地图模板",
         "invalid_cell": "非法的地图坐标",
         "depleted": "该地块资源已枯竭",
-        "impassable": "该地块无法进入"
+        "impassable": "该地块无法进入",
+        "world_edge": "这里已经是已知世界的边界",
+        "no_border_entry": "相邻地域的边界没有可通行入口",
+        "not_current_cell": "只能操作当前所在的地块",
+        "not_gatherable": "该地块没有可采集资源",
+        "no_resources_now": "当前时节或时段没有可采集资源",
+        "stamina": "精力不足，无法完成这次行动",
+        "stamina_full": "当前精力已经充沛",
+        "not_food": "该物品不能用于恢复探索精力",
+        "cannot_camp": "此处不适合扎营休息",
+        "camp_cooldown": "今天已经充分休息过了，等到下一个游戏日再扎营",
+        "event_unknown": "这个世界事件不存在",
+        "event_not_active": "当前地块没有可继续处理的这个事件",
+        "event_action_invalid": "这个事件不支持所选行动"
+        ,"event_blocks_movement": "当前事件尚未解决，你无法离开这个地块"
       },
       "inventory": {
         "invalid_type": "未知物品大类",
@@ -38,7 +52,9 @@
       },
       "shop": {
         "owned": "已经拥有该装备",
-        "gold": "金币不足，无法购买"
+        "gold": "金币不足，无法购买",
+        "not_in_settlement": "只有站在村庄或城镇地块时才能交易",
+        "closed": "商店已经打烊，请在白天或黄昏前来"
       },
       "craft": {
         "failed": "炼金流程执行失败",
@@ -51,7 +67,10 @@
         "no_combat": "该 NPC 没有可用的战斗配置",
         "combat_locked": "战斗尚未被该 NPC 的互动规则触发",
         "combat_consumed": "该战斗触发器已被消耗",
-        "invalid_combat_profile": "NPC 战斗配置引用了不存在的目录条目"
+        "invalid_combat_profile": "NPC 战斗配置引用了不存在的目录条目",
+        "story_hook_unknown": "该人物没有配置这个任务",
+        "monster_unknown": "未知的野怪",
+        "event_target_invalid": "事件引用了无效的参与者或交互目标"
       }
     },
     "exploration": {
@@ -83,6 +102,9 @@
         "victory": "=== 📊 最终结算 ===\n🏆 获得胜利！",
         "pvp": "\n⚔️ PvP 联机决斗已结束，荣誉即是最高奖赏。",
         "reward": "\n💰 斩获战利金：+{gold} 金币！\n🎁 额外获得：{loot}",
+        "monster_reward": "💰 野怪战利品：{gold} 金币；{loot}",
+        "monster_drop_item": "{name} ×{quantity}",
+        "monster_no_drop": "没有发现额外素材",
         "weapon_loot": "全新武器【{name}】",
         "armor_loot": "武装防具【{name}】",
         "item_loot": "炼金道具【{name}】×1"
@@ -110,6 +132,10 @@
         "player_dialogue": "你与{npc_name}交谈：{reply}",
         "fallback_summary": "玩家与{npc_name}进行了一次交谈。",
         "story_progress": "{npc_name}的剧情线“{hook_title}”出现了新的进展。",
+        "event_quest_npc": "我在世界事件中将任务“{hook_title}”托付给了玩家。",
+        "event_quest_player": "你从{npc_name}处接下任务“{hook_title}”。",
+        "event_combat_armed_npc": "玩家在一次世界事件中激怒了我，冲突已经无法用言语收场。",
+        "event_combat_armed_player": "你在世界事件中激怒了{npc_name}，对方已经准备战斗。",
         "combat_start_npc": "与玩家的冲突升级为战斗：{trigger_title}。",
         "combat_start_player": "你与{npc_name}的对峙升级为战斗：{trigger_title}。",
         "combat_start_world": "{npc_name}与一名冒险者在{region}爆发了冲突。",

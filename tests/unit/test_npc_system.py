@@ -31,3 +31,10 @@ def test_public_npc_view_does_not_expose_private_backstory(npc_service):
     assert "private_secret" not in serialized
     assert "难民姓名" not in serialized
 
+
+def test_event_npcs_publish_portrait_equipment_and_story_hooks(npc_service):
+    view = npc_service.get_npc_view("seren_gravewarden", "test_player")["npc"]
+    assert view["image_url"].endswith("vampire-dracula.svg")
+    assert view["equipment"]["weapon_id"]
+    assert view["story_hooks"][0]["hook_id"] == "seren_stolen_nameplates"
+    assert view["combat_tactics"]

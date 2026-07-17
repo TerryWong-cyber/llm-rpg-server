@@ -82,6 +82,7 @@ class NPCProfile(BaseModel):
     gender: str
     race: str
     appearance: str
+    image_url: str | None = None
     location: NPCLocation
     personality: list[str]
     conversation_style: str
@@ -124,4 +125,3 @@ class GeneratedDialogue(BaseModel):
     tone: str
     mentioned_hook_id: str | None = None
     memory_summary: str = ""
-

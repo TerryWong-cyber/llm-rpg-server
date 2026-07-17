@@ -41,6 +41,22 @@ class CellRequest(BaseModel):
     cell_id: int = Field(ge=0)
 
 
+class DirectionRequest(BaseModel):
+    player_id: str
+    direction: Literal["up", "down", "left", "right"]
+
+
+class EatRequest(BaseModel):
+    player_id: str
+    item_id: str
+
+
+class EventActionRequest(BaseModel):
+    player_id: str
+    event_id: str
+    action_id: str
+
+
 class RoomJoinRequest(BaseModel):
     room_id: str
     player_id: str
@@ -58,4 +74,3 @@ class NPCDialogueRequest(BaseModel):
 class NPCCombatStartRequest(BaseModel):
     player_id: str
     trigger_id: str
-

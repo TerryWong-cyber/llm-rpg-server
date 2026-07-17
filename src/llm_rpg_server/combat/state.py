@@ -17,6 +17,7 @@ class GameState(TypedDict):
     player_id: Annotated[str, replace_state]
     p2_id: Annotated[str, replace_state]
     game_mode: Annotated[str, replace_state]
+    reward_policy: Annotated[str, replace_state]
     player_class: Annotated[dict[str, Any] | None, replace_state]
     player_weapon: Annotated[dict[str, Any], replace_state]
     player_armor: Annotated[dict[str, Any], replace_state]

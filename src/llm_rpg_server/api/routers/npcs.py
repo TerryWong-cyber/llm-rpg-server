@@ -56,13 +56,24 @@ def world_facts(container: Container):
     return {"facts": container.npc_interactions.world_facts()}
 
 
+@router.get("/monsters")
+def list_monsters(container: Container):
+    return {"monsters": [item.public_view() for item in container.monsters.list_all()]}
+
+
+@router.get("/monsters/{monster_id}")
+def get_monster(monster_id: str, container: Container):
+    return {"monster": container.monsters.public_view(monster_id)}
+
+
 @router.post("/npcs/{npc_id}/combat/start")
 def start_npc_combat(npc_id: str, request: NPCCombatStartRequest, container: Container):
+    container.exploration.require_stamina(request.player_id, "combat")
     room = container.combat.start_npc_combat(request.player_id, npc_id, request.trigger_id)
+    container.exploration.spend_stamina(request.player_id, "combat")
     return {
         "status": "success",
         "room_id": room.room_id,
         "websocket_path": f"/ws/room/{room.room_id}/{request.player_id}",
         "snapshot": container.combat.snapshot(room),
     }
-

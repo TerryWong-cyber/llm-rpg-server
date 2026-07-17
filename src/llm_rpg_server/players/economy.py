@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 from llm_rpg_server.catalog import Catalog
 from llm_rpg_server.shared.config import ContentProvider
 
@@ -7,13 +9,29 @@ from .models import PlayerProfile
 from .repository import PlayerRepository
 
 
+class TradeAccessPolicy(Protocol):
+    def require_trade_access(self, player_id: str) -> None: ...
+
+
 class EconomyService:
-    def __init__(self, players: PlayerRepository, catalog: Catalog, content: ContentProvider):
+    def __init__(
+        self,
+        players: PlayerRepository,
+        catalog: Catalog,
+        content: ContentProvider,
+        access_policy: TradeAccessPolicy | None = None,
+    ):
         self.players = players
         self.catalog = catalog
         self.content = content
+        self.access_policy = access_policy
+
+    def set_access_policy(self, access_policy: TradeAccessPolicy) -> None:
+        self.access_policy = access_policy
 
     def buy(self, player_id: str, item_type: str, item_id: str) -> PlayerProfile:
+        if self.access_policy:
+            self.access_policy.require_trade_access(player_id)
         definition = self.catalog.item_definition(item_type, item_id)
         if item_type not in {"weapon", "armor", "item"} or definition is None:
             raise ValueError(self.content.text("errors.inventory.invalid_item"))
@@ -36,6 +54,8 @@ class EconomyService:
         return self.players.get(player_id)
 
     def sell(self, player_id: str, item_type: str, item_id: str) -> PlayerProfile:
+        if self.access_policy:
+            self.access_policy.require_trade_access(player_id)
         definition = self.catalog.item_definition(item_type, item_id)
         if definition is None:
             raise ValueError(self.content.text("errors.inventory.invalid_item"))
@@ -69,4 +89,3 @@ class EconomyService:
                 raise ValueError(self.content.text("errors.inventory.invalid_type"))
             profile.gold += int(definition["value"]) // 2
         return self.players.get(player_id)
-

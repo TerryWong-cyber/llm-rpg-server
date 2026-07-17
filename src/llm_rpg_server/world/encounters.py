@@ -7,6 +7,8 @@ from llm_rpg_server.exploration.repository import InMemoryEncounterHistory
 from llm_rpg_server.npcs.service import NPCInteractionService
 from llm_rpg_server.shared.config import ContentProvider
 
+from .time import WorldClock
+
 
 class EncounterService:
     def __init__(
@@ -14,9 +16,11 @@ class EncounterService:
         content: ContentProvider,
         npc_interactions: NPCInteractionService,
         history: InMemoryEncounterHistory | None = None,
+        clock: WorldClock | None = None,
     ):
         self.npc_interactions = npc_interactions
         self.history = history or InMemoryEncounterHistory()
+        self.clock = clock
         payload = content.document("maps/encounters.json")
         self.rules = sorted(
             (EncounterRule.model_validate(item) for item in payload["encounters"]),
@@ -34,7 +38,8 @@ class EncounterService:
                 continue
             attempt = self.history.next_attempt(player_id, rule.encounter_id)
             rng = random.Random(f"{map_instance.seed}:{player_id}:{cell.cell_id}:{rule.encounter_id}:{attempt}")
-            if rng.random() > rule.chance:
+            effective_chance = min(1.0, rule.chance * cell.npc_chance_multiplier)
+            if rng.random() > effective_chance:
                 continue
             self.history.record(player_id, rule.encounter_id)
             return EncounterResult(
@@ -48,6 +53,7 @@ class EncounterService:
     def _conditions_match(self, rule: EncounterRule, player_id: str) -> bool:
         view = self.npc_interactions.get_npc_view(rule.npc_id, player_id)
         relationship = view["relationship"]
+        now = self.clock.snapshot() if self.clock else None
         for condition in rule.conditions:
             if condition.kind == "relationship_at_least":
                 if condition.field is None or getattr(relationship, condition.field) < (condition.threshold or 0):
@@ -64,6 +70,12 @@ class EncounterService:
                     for value in condition.values
                 ):
                     return False
+            elif condition.kind == "time_period":
+                if now is None or now.period not in condition.values:
+                    return False
+            elif condition.kind == "season":
+                if now is None or now.season not in condition.values:
+                    return False
         return True
 
     @staticmethod
@@ -77,4 +89,3 @@ class EncounterService:
             not locations.cell_ids or cell.cell_id in locations.cell_ids,
         )
         return all(checks)
-

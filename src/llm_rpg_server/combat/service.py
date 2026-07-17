@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import random
+from copy import deepcopy
 from typing import Any
 
 from llm_rpg_server.catalog import Catalog
 from llm_rpg_server.npcs import NPCInteractionService
+from llm_rpg_server.monsters import MonsterCatalog, MonsterDefinition
 from llm_rpg_server.players import PlayerRepository
 from llm_rpg_server.shared.config import ContentProvider
 from llm_rpg_server.shared.observability import Observability
@@ -22,6 +25,7 @@ class CombatSessionService:
         npc_interactions: NPCInteractionService,
         content: ContentProvider,
         observability: Observability,
+        monsters: MonsterCatalog | None = None,
     ):
         self.engine = engine
         self.rooms = rooms
@@ -30,6 +34,7 @@ class CombatSessionService:
         self.npc_interactions = npc_interactions
         self.content = content
         self.observability = observability
+        self.monsters = monsters
 
     def create_room(self, player_id: str) -> GameRoom:
         self.players.get(player_id)
@@ -98,6 +103,7 @@ class CombatSessionService:
             "player_id": player_id,
             "p2_id": room.p2_id,
             "game_mode": "PvE",
+            "reward_policy": "configured_opponent",
         }, config=config)
         enemy_class = self.catalog.characters[combat.character_id]
         enemy_armor = self.catalog.armors[combat.armor_id]
@@ -112,6 +118,57 @@ class CombatSessionService:
             "ai_hp": enemy_class["hp"] + enemy_armor["hp_bonus"],
             "ai_mp": enemy_class["mp"],
             "ai_status": self.content.text("combat.status_normal"),
+            "reward_policy": "configured_opponent",
+        })
+        return room
+
+    def start_monster_combat(
+        self,
+        player_id: str,
+        monster_id: str,
+        event_id: str,
+    ) -> GameRoom:
+        self.players.get(player_id)
+        if self.monsters is None:
+            raise ValueError(self.content.text("errors.npc.monster_unknown"))
+        monster = self.monsters.get(monster_id)
+        room = self.rooms.create_monster(player_id, monster_id, event_id)
+        config = self.config(room)
+        self.engine.app.invoke({
+            "messages": [],
+            "player_id": player_id,
+            "p2_id": room.p2_id,
+            "game_mode": "PvE",
+            "reward_policy": "configured_opponent",
+        }, config=config)
+        equipment = monster.equipment
+        enemy_class = {
+            "id": monster.monster_id,
+            "name": monster.name,
+            "hp": monster.stats.hp,
+            "mp": monster.stats.mp,
+            "str": monster.stats.strength,
+            "agi": monster.stats.agility,
+            "int": monster.stats.intelligence,
+            "desc": monster.description,
+            "image_url": monster.image_url,
+        }
+        enemy_weapon = deepcopy(self.catalog.weapons[equipment.weapon_id])
+        enemy_weapon["name"] = equipment.weapon_name
+        enemy_armor = deepcopy(self.catalog.armors[equipment.armor_id])
+        enemy_armor["name"] = equipment.armor_name
+        self.engine.app.update_state(config, {
+            "environment": monster.combat.arena,
+            "ai_class": enemy_class,
+            "ai_weapon": enemy_weapon,
+            "ai_armor": enemy_armor,
+            "ai_item": self.catalog.items.get(equipment.item_id) if equipment.item_id else None,
+            "ai_item_id": equipment.item_id,
+            "ai_item_count": equipment.item_count,
+            "ai_hp": monster.stats.hp + int(enemy_armor["hp_bonus"]),
+            "ai_mp": monster.stats.mp,
+            "ai_status": self.content.text("combat.status_normal"),
+            "reward_policy": "configured_opponent",
         })
         return room
 
@@ -165,7 +222,7 @@ class CombatSessionService:
         room.p2_act = None
         snapshot = self.snapshot(room)
         if snapshot["game_over"]:
-            self._record_npc_outcome(room)
+            self._record_opponent_outcome(room)
             snapshot = self.snapshot(room)
             self.observability.flush()
         return snapshot
@@ -181,6 +238,7 @@ class CombatSessionService:
             view = self.npc_interactions.get_npc_view(room.npc_id, room.p1_id)
             npc_enemy = dict(view["npc"])
             npc_enemy["relationship"] = view["relationship"].model_dump(mode="json")
+        monster_enemy = self.monsters.public_view(room.monster_id) if room.monster_id and self.monsters else None
         return {
             "room_id": room.room_id,
             "thread_id": room.thread_id,
@@ -217,6 +275,8 @@ class CombatSessionService:
             },
             "combat_log": values["messages"][-1].content if values.get("messages") else "",
             "npc_enemy": npc_enemy,
+            "monster_enemy": monster_enemy,
+            "reward_summary": room.reward_summary,
         }
 
     def config(self, room: GameRoom) -> dict[str, Any]:
@@ -263,11 +323,52 @@ class CombatSessionService:
             return False
         raise PermissionError(self.content.text("errors.room.invalid_member"))
 
-    def _record_npc_outcome(self, room: GameRoom) -> None:
-        if not room.npc_id or room.npc_outcome_recorded:
+    def _record_opponent_outcome(self, room: GameRoom) -> None:
+        if room.opponent_outcome_recorded:
             return
         values = self.engine.app.get_state(self.config(room)).values
-        player_hp, npc_hp = values.get("player_hp", 0), values.get("ai_hp", 0)
-        player_won = None if player_hp <= 0 and npc_hp <= 0 else player_hp > 0 and npc_hp <= 0
-        self.npc_interactions.record_combat_outcome(room.npc_id, room.p1_id, player_won)
-        room.npc_outcome_recorded = True
+        player_hp, opponent_hp = values.get("player_hp", 0), values.get("ai_hp", 0)
+        player_won = None if player_hp <= 0 and opponent_hp <= 0 else player_hp > 0 and opponent_hp <= 0
+        if room.npc_id:
+            self.npc_interactions.record_combat_outcome(room.npc_id, room.p1_id, player_won)
+            room.npc_outcome_recorded = True
+        elif room.monster_id and self.monsters and player_won is True:
+            monster = self.monsters.get(room.monster_id)
+            awarded, reward = self.players.update_once(
+                room.p1_id,
+                f"monster_reward:{room.thread_id}",
+                lambda profile: self._grant_monster_reward(profile, monster, room.thread_id),
+            )
+            if awarded and reward:
+                room.reward_summary = self._monster_reward_summary(reward)
+        room.opponent_outcome_recorded = True
+
+    def _grant_monster_reward(self, profile, monster: MonsterDefinition, seed: str) -> dict[str, Any]:
+        rng = random.Random(f"{seed}:{monster.monster_id}")
+        gold = rng.randint(monster.gold_min, monster.gold_max)
+        profile.gold += gold
+        drops: list[tuple[str, str, int]] = []
+        for drop in monster.drops:
+            if rng.random() > drop.chance:
+                continue
+            quantity = rng.randint(drop.minimum, drop.maximum)
+            collection = profile.inventory.items if drop.item_type == "item" else profile.inventory.materials
+            collection[drop.item_id] = collection.get(drop.item_id, 0) + quantity
+            drops.append((drop.item_type, drop.item_id, quantity))
+        return {"gold": gold, "drops": drops}
+
+    def _monster_reward_summary(self, reward: dict[str, Any]) -> str:
+        labels = []
+        for item_type, item_id, quantity in reward["drops"]:
+            definition = self.catalog.items[item_id] if item_type == "item" else self.catalog.resources[item_id]
+            labels.append(self.content.text(
+                "combat.settlement.monster_drop_item",
+                name=definition["name"],
+                quantity=quantity,
+            ))
+        loot = self.content.text("combat.settlement.monster_no_drop") if not labels else "、".join(labels)
+        return self.content.text(
+            "combat.settlement.monster_reward",
+            gold=reward["gold"],
+            loot=loot,
+        )

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "encounters": [
     {
       "encounter_id": "encounter.evelyn.fallen_fir",
@@ -36,6 +36,42 @@
       "cooldown_seconds": 0,
       "repeatable": false,
       "story_hook_id": "marin_furnace"
+    },
+    {
+      "encounter_id": "encounter.evelyn.settlement_rounds",
+      "npc_id": "evelyn_mossmark",
+      "locations": {"region_ids": ["mistwood"], "terrain_ids": ["9", "10"]},
+      "trigger": "on_enter_cell",
+      "chance": 0.06,
+      "priority": 20,
+      "conditions": [{"kind": "time_period", "values": ["dawn", "day", "dusk"]}],
+      "cooldown_seconds": 600,
+      "repeatable": true,
+      "story_hook_id": null
+    },
+    {
+      "encounter_id": "encounter.darok.settlement_trade",
+      "npc_id": "darok_blacksalt",
+      "locations": {"region_ids": ["western_desert"], "terrain_ids": ["9", "10"]},
+      "trigger": "on_enter_cell",
+      "chance": 0.05,
+      "priority": 20,
+      "conditions": [{"kind": "time_period", "values": ["dawn", "day", "dusk"]}],
+      "cooldown_seconds": 600,
+      "repeatable": true,
+      "story_hook_id": null
+    },
+    {
+      "encounter_id": "encounter.marin.settlement_repairs",
+      "npc_id": "marin_redanvil",
+      "locations": {"region_ids": ["broken_spine"], "terrain_ids": ["9", "10"]},
+      "trigger": "on_enter_cell",
+      "chance": 0.06,
+      "priority": 20,
+      "conditions": [{"kind": "time_period", "values": ["dawn", "day", "dusk"]}],
+      "cooldown_seconds": 600,
+      "repeatable": true,
+      "story_hook_id": null
     }
   ]
 }

@@ -33,12 +33,16 @@ class NPCInteractionService:
             "gender": npc.gender,
             "race": npc.race,
             "appearance": npc.appearance,
+            "image_url": npc.image_url,
             "location": npc.location.model_dump(mode="json"),
             "personality": npc.personality,
             "conversation_style": npc.conversation_style,
             "public_backstory": npc.backstory.public_summary,
+            "equipment": npc.equipment.model_dump(mode="json"),
+            "story_hooks": [hook.model_dump(mode="json") for hook in npc.story_hooks],
             "has_combat_profile": npc.combat is not None,
             "combat_threat": npc.combat.threat if npc.combat else None,
+            "combat_tactics": list(npc.combat.tactics) if npc.combat else [],
         }
 
     def list_npcs(self, terrain_id: str | None = None, cell_id: int | None = None) -> list[dict[str, Any]]:
@@ -130,6 +134,75 @@ class NPCInteractionService:
             facts={"npc_id": npc_id, "trigger_id": trigger_id},
         )
         return npc, npc.combat
+
+    def activate_story_hook(
+        self,
+        npc_id: str,
+        player_id: str,
+        hook_id: str,
+        *,
+        source: str,
+    ) -> StoryHook:
+        npc = self.repository.get_npc(npc_id)
+        hook = next((item for item in npc.story_hooks if item.hook_id == hook_id), None)
+        if hook is None:
+            raise ValueError(self.content.text("errors.npc.story_hook_unknown"))
+        relationship = self.repository.get_or_create_relationship(npc, player_id)
+        if hook.hook_id not in relationship.active_story_hooks:
+            relationship.active_story_hooks.append(hook.hook_id)
+            self.repository.save_relationship(relationship)
+            self.repository.append_shared_memory(
+                npc_id=npc_id,
+                player_id=player_id,
+                npc_summary=self.content.text(
+                    "npc.memory.event_quest_npc", hook_title=hook.title
+                ),
+                player_summary=self.content.text(
+                    "npc.memory.event_quest_player", npc_name=npc.name, hook_title=hook.title
+                ),
+                tags=["story_hook", hook.hook_id, "world_event", source],
+                importance=4,
+                facts={"hook_id": hook.hook_id, "source": source},
+            )
+            self.repository.record_world_fact(
+                self.content.text("npc.memory.story_progress", npc_name=npc.name, hook_title=hook.title),
+                tags=["story_hook", hook.hook_id, npc.npc_id, "world_event"],
+                facts={"npc_id": npc.npc_id, "hook_id": hook.hook_id, "source": source},
+            )
+        return hook
+
+    def arm_event_combat(
+        self,
+        npc_id: str,
+        player_id: str,
+        trigger_id: str,
+        *,
+        source: str,
+    ) -> None:
+        npc = self.repository.get_npc(npc_id)
+        trigger = next((item for item in npc.combat_triggers if item.trigger_id == trigger_id), None)
+        if npc.combat is None or trigger is None:
+            raise ValueError(self.content.text("errors.npc.combat_locked"))
+        relationship = self.repository.get_or_create_relationship(npc, player_id)
+        if trigger_id in relationship.consumed_combat_triggers and not trigger.repeatable:
+            raise ValueError(self.content.text("errors.npc.combat_consumed"))
+        if trigger_id not in relationship.armed_combat_triggers:
+            relationship.armed_combat_triggers.append(trigger_id)
+        if "angered_by_event" not in relationship.flags:
+            relationship.flags.append("angered_by_event")
+        relationship.hostility = clamp(relationship.hostility + 12, 0, 100)
+        self.repository.save_relationship(relationship)
+        self.repository.append_shared_memory(
+            npc_id=npc_id,
+            player_id=player_id,
+            npc_summary=self.content.text("npc.memory.event_combat_armed_npc"),
+            player_summary=self.content.text(
+                "npc.memory.event_combat_armed_player", npc_name=npc.name
+            ),
+            tags=["combat_armed", "world_event", source, trigger_id],
+            importance=5,
+            facts={"trigger_id": trigger_id, "source": source},
+        )
 
     def record_combat_outcome(self, npc_id: str, player_id: str, player_won: bool | None) -> None:
         npc = self.repository.get_npc(npc_id)

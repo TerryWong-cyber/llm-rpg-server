@@ -272,6 +272,16 @@
       "desc": "立即恢复 50 点 MP。",
       "image_url": "/assets/vendor/game-icons/lorc/round-bottom-flask.svg"
     },
+    "7": {
+      "id": 7,
+      "name": "旅行干粮",
+      "type": "heal_hp",
+      "val": 5,
+      "stamina_restore": 30,
+      "value": 12,
+      "desc": "便于携带的肉干和硬饼。进食可恢复 30 点精力；带入战斗时仅能少量恢复生命。",
+      "image_url": "/assets/vendor/game-icons/darkzaitzev/fried-fish.svg"
+    },
     "3": {
       "id": 3,
       "name": "烈火炸弹",
@@ -310,54 +320,46 @@
     }
   },
   "resources": {
-    "mat_1": {
-      "id": "mat_1",
-      "name": "原木",
-      "emoji": "🪵",
-      "desc": "基础建筑与打造材料",
-      "value": 5,
-      "image_url": "/assets/vendor/game-icons/delapouite/log.svg"
-    },
-    "mat_2": {
-      "id": "mat_2",
-      "name": "石块",
-      "emoji": "🪨",
-      "desc": "坚硬的矿石",
-      "value": 5,
-      "image_url": "/assets/vendor/game-icons/lorc/rock.svg"
-    },
-    "mat_3": {
-      "id": "mat_3",
-      "name": "发光蘑菇",
-      "emoji": "🍄",
-      "desc": "炼金绝佳材料",
-      "value": 15,
-      "image_url": "/assets/vendor/game-icons/delapouite/mushrooms.svg"
-    },
-    "mat_4": {
-      "id": "mat_4",
-      "name": "鲜鱼",
-      "emoji": "🐟",
-      "desc": "恢复体力的食材",
-      "value": 10,
-      "image_url": "/assets/vendor/game-icons/darkzaitzev/fried-fish.svg"
-    },
-    "mat_5": {
-      "id": "mat_5",
-      "name": "铁矿",
-      "emoji": "⛏️",
-      "desc": "锻造武器的刚需",
-      "value": 20,
-      "image_url": "/assets/vendor/game-icons/lorc/crystal-bars.svg"
-    },
-    "mat_6": {
-      "id": "mat_6",
-      "name": "草药",
-      "emoji": "🌿",
-      "desc": "制作治疗药水",
-      "value": 8,
-      "image_url": "/assets/vendor/game-icons/delapouite/olive.svg"
-    }
+    "mat_1": {"id": "mat_1", "name": "原木", "emoji": "🪵", "category": "wood", "rarity": "common", "desc": "常见的基础木料，可用于打造、燃料和建筑。", "value": 5, "image_url": "/assets/vendor/game-icons/delapouite/log.svg"},
+    "mat_2": {"id": "mat_2", "name": "石块", "emoji": "🪨", "category": "mineral", "rarity": "common", "desc": "随处可见的坚硬石料。", "value": 5, "image_url": "/assets/vendor/game-icons/lorc/rock.svg"},
+    "mat_3": {"id": "mat_3", "name": "发光蘑菇", "emoji": "🍄", "category": "plant", "rarity": "uncommon", "desc": "在幽暗处发出微光的炼金菌类。", "value": 15, "image_url": "/assets/vendor/game-icons/delapouite/mushrooms.svg"},
+    "mat_4": {"id": "mat_4", "name": "鲜鱼", "emoji": "🐟", "category": "aquatic", "rarity": "common", "desc": "可烹饪恢复精力的鲜活食材。", "value": 10, "image_url": "/assets/vendor/game-icons/darkzaitzev/fried-fish.svg"},
+    "mat_5": {"id": "mat_5", "name": "铁矿", "emoji": "⛏️", "category": "mineral", "rarity": "common", "desc": "锻造武器和护甲最常用的金属矿。", "value": 20, "image_url": "/assets/vendor/game-icons/lorc/crystal-bars.svg"},
+    "mat_6": {"id": "mat_6", "name": "草药", "emoji": "🌿", "category": "plant", "rarity": "common", "desc": "制作治疗药水的基础药材。", "value": 8, "image_url": "/assets/vendor/game-icons/delapouite/olive.svg"},
+    "mat_7": {"id": "mat_7", "name": "萤火虫", "emoji": "✨", "category": "creature", "rarity": "uncommon", "desc": "只在夜间水边与密林中活跃的微光生物。", "value": 12, "image_url": "/assets/vendor/game-icons/delapouite/flying-beetle.svg"},
+    "mat_8": {"id": "mat_8", "name": "霜心草", "emoji": "❄️", "category": "plant", "rarity": "rare", "desc": "严冬中才会凝出药性晶露的耐寒草药。", "value": 18, "image_url": "/assets/vendor/game-icons/lorc/snowflake-2.svg"},
+    "mat_9": {"id": "mat_9", "name": "月影菌", "emoji": "🌙", "category": "plant", "rarity": "uncommon", "desc": "入夜后才舒展菌伞的幽蓝炼金素材。", "value": 16, "image_url": "/assets/vendor/game-icons/delapouite/mushrooms.svg"},
+    "mat_10": {"id": "mat_10", "name": "余烬晶", "emoji": "🔥", "category": "arcane", "rarity": "rare", "desc": "火山地脉冷却后留下的炽热晶体。", "value": 24, "image_url": "/assets/vendor/game-icons/delapouite/fire-gem.svg"},
+    "mat_11": {"id": "mat_11", "name": "银芦苇", "emoji": "🎋", "category": "plant", "rarity": "common", "desc": "湿地与河岸常见的坚韧纤维材料。", "value": 7, "image_url": "/assets/vendor/game-icons/delapouite/reed.svg"},
+    "mat_12": {"id": "mat_12", "name": "赤砂盐晶", "emoji": "🧂", "category": "mineral", "rarity": "common", "desc": "沙海浅层沉积的矿盐，可用于保存食物和炼金。", "value": 9, "image_url": "/assets/vendor/game-icons/lorc/salt-shaker.svg"},
+    "mat_13": {"id": "mat_13", "name": "古木心材", "emoji": "🌳", "category": "wood", "rarity": "uncommon", "desc": "古老树木内部致密而富有魔力的心材。", "value": 18, "image_url": "/assets/vendor/game-icons/delapouite/log.svg"},
+    "mat_14": {"id": "mat_14", "name": "野莓", "emoji": "🫐", "category": "plant", "rarity": "common", "desc": "温暖季节成熟的酸甜浆果，可食用也可酿造。", "value": 6, "image_url": "/assets/vendor/game-icons/delapouite/berry-bush.svg"},
+    "mat_15": {"id": "mat_15", "name": "野蜂巢", "emoji": "🍯", "category": "creature", "rarity": "uncommon", "desc": "盛有蜂蜜和蜂蜡的完整蜂巢。", "value": 14, "image_url": "/assets/vendor/game-icons/lorc/honeycomb.svg"},
+    "mat_16": {"id": "mat_16", "name": "兽皮", "emoji": "🦬", "category": "creature", "rarity": "common", "desc": "猎物留下的完整毛皮，可制成皮甲和帐篷。", "value": 11, "image_url": "/assets/vendor/game-icons/delapouite/animal-hide.svg"},
+    "mat_17": {"id": "mat_17", "name": "兽骨", "emoji": "🦴", "category": "creature", "rarity": "common", "desc": "可用于工具、护符和炼金粉末的坚硬骨材。", "value": 8, "image_url": "/assets/vendor/game-icons/lorc/crossed-bones.svg"},
+    "mat_18": {"id": "mat_18", "name": "风羽", "emoji": "🪶", "category": "creature", "rarity": "uncommon", "desc": "高山猛禽脱落的轻盈长羽。", "value": 13, "image_url": "/assets/vendor/game-icons/lorc/feather.svg"},
+    "mat_19": {"id": "mat_19", "name": "铜矿", "emoji": "🟠", "category": "mineral", "rarity": "common", "desc": "延展性良好的基础金属矿，适合制作器具。", "value": 13, "image_url": "/assets/vendor/game-icons/faithtoken/ore.svg"},
+    "mat_20": {"id": "mat_20", "name": "银矿", "emoji": "⚪", "category": "mineral", "rarity": "rare", "desc": "纯净且导魔性良好的稀有金属矿。", "value": 32, "image_url": "/assets/vendor/game-icons/delapouite/mineral-pearls.svg"},
+    "mat_21": {"id": "mat_21", "name": "煤块", "emoji": "⬛", "category": "mineral", "rarity": "common", "desc": "矿道与洞穴中常见的高热燃料。", "value": 7, "image_url": "/assets/vendor/game-icons/delapouite/coal-pile.svg"},
+    "mat_22": {"id": "mat_22", "name": "石英簇", "emoji": "🔹", "category": "mineral", "rarity": "uncommon", "desc": "可储存微弱魔力的透明晶簇。", "value": 17, "image_url": "/assets/vendor/game-icons/lorc/crystal-growth.svg"},
+    "mat_23": {"id": "mat_23", "name": "黑曜石", "emoji": "◆", "category": "mineral", "rarity": "rare", "desc": "火山熔岩骤冷形成的锋利黑色玻璃。", "value": 27, "image_url": "/assets/vendor/game-icons/lorc/crystal-bars.svg"},
+    "mat_24": {"id": "mat_24", "name": "永冻冰晶", "emoji": "💎", "category": "arcane", "rarity": "uncommon", "desc": "在严寒地脉中多年不融的结晶冰。", "value": 21, "image_url": "/assets/vendor/game-icons/delapouite/ice-cubes.svg"},
+    "mat_25": {"id": "mat_25", "name": "霜兽毛皮", "emoji": "🐻‍❄️", "category": "creature", "rarity": "rare", "desc": "能隔绝极寒的厚实白色毛皮。", "value": 30, "image_url": "/assets/vendor/game-icons/delapouite/animal-hide.svg"},
+    "mat_26": {"id": "mat_26", "name": "河蟹", "emoji": "🦀", "category": "aquatic", "rarity": "common", "desc": "栖息在浅滩石缝中的甲壳食材。", "value": 8, "image_url": "/assets/vendor/game-icons/lorc/crab.svg"},
+    "mat_27": {"id": "mat_27", "name": "月白珍珠", "emoji": "⚪", "category": "aquatic", "rarity": "rare", "desc": "偶尔能从古老贝类中发现的温润珍珠。", "value": 38, "image_url": "/assets/vendor/game-icons/delapouite/oyster-pearl.svg"},
+    "mat_28": {"id": "mat_28", "name": "浅海珊瑚", "emoji": "🪸", "category": "aquatic", "rarity": "uncommon", "desc": "退潮时可采集的坚硬珊瑚枝。", "value": 16, "image_url": "/assets/vendor/game-icons/delapouite/coral.svg"},
+    "mat_29": {"id": "mat_29", "name": "水藻", "emoji": "🌿", "category": "aquatic", "rarity": "common", "desc": "淡水与浅海中都能找到的柔韧藻类。", "value": 5, "image_url": "/assets/vendor/game-icons/delapouite/algae.svg"},
+    "mat_30": {"id": "mat_30", "name": "沼泽毒囊", "emoji": "🟣", "category": "creature", "rarity": "uncommon", "desc": "夜行沼泽生物留下的毒液腺体。", "value": 19, "image_url": "/assets/vendor/game-icons/lorc/potion-ball.svg"},
+    "mat_31": {"id": "mat_31", "name": "沼泽苔", "emoji": "🟢", "category": "plant", "rarity": "common", "desc": "吸附水汽与微量毒素的厚实苔藓。", "value": 7, "image_url": "/assets/vendor/game-icons/delapouite/algae.svg"},
+    "mat_32": {"id": "mat_32", "name": "绿洲椰枣", "emoji": "🌴", "category": "plant", "rarity": "common", "desc": "绿洲棕榈结出的甜蜜果实，便于旅途中保存。", "value": 9, "image_url": "/assets/vendor/game-icons/delapouite/palm-tree.svg"},
+    "mat_33": {"id": "mat_33", "name": "赤砂蝎尾", "emoji": "🦂", "category": "creature", "rarity": "uncommon", "desc": "沙漠蝎类的带毒尾刺，多在夜间取得。", "value": 18, "image_url": "/assets/vendor/game-icons/lorc/scorpion-tail.svg"},
+    "mat_34": {"id": "mat_34", "name": "琥珀树脂", "emoji": "🟡", "category": "regional", "rarity": "rare", "desc": "草原边缘老树凝成的金黄树脂，是琥珀草原特产。", "value": 29, "image_url": "/assets/vendor/game-icons/delapouite/amber-mosquito.svg"},
+    "mat_35": {"id": "mat_35", "name": "长风羊毛", "emoji": "🐑", "category": "regional", "rarity": "common", "desc": "琥珀草原牧群产出的柔韧羊毛。", "value": 10, "image_url": "/assets/vendor/game-icons/delapouite/wool.svg"},
+    "mat_36": {"id": "mat_36", "name": "火山硫", "emoji": "🟨", "category": "mineral", "rarity": "uncommon", "desc": "火山喷气孔周围沉积的刺鼻黄色粉末。", "value": 15, "image_url": "/assets/vendor/game-icons/lorc/powder.svg"},
+    "mat_37": {"id": "mat_37", "name": "幽魂精华", "emoji": "👻", "category": "arcane", "rarity": "rare", "desc": "只在夜间凝聚于墓园和遗迹的灵性残响。", "value": 36, "image_url": "/assets/vendor/game-icons/lorc/ghost.svg"},
+    "mat_38": {"id": "mat_38", "name": "铭文残石", "emoji": "🗿", "category": "relic", "rarity": "rare", "desc": "刻有残缺符文的遗迹碎片，仍带微弱回响。", "value": 28, "image_url": "/assets/vendor/game-icons/lorc/rune-stone.svg"},
+    "mat_39": {"id": "mat_39", "name": "洞蝠翼", "emoji": "🦇", "category": "creature", "rarity": "uncommon", "desc": "夜间洞穴生物留下的轻薄翼膜。", "value": 14, "image_url": "/assets/vendor/game-icons/lorc/bat-wing.svg"},
+    "mat_40": {"id": "mat_40", "name": "潮纹螺壳", "emoji": "🐚", "category": "aquatic", "rarity": "common", "desc": "海岸与湖滩常见的带纹螺壳。", "value": 7, "image_url": "/assets/vendor/game-icons/lorc/spiral-shell.svg"}
   },
   "environments": [
     "【泥泞沼泽】：降低所有敏捷动作收益，重剑类大开大合武器更容易失去重心。",

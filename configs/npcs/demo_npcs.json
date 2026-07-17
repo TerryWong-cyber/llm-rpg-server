@@ -8,6 +8,7 @@
       "gender": "女",
       "race": "林裔",
       "appearance": "银灰短发，左眼覆着琥珀色单片镜，斗篷边缘总沾着新鲜苔藓。",
+      "image_url": "/assets/vendor/game-icons/delapouite/woman-elf-face.svg",
       "location": {"region": "雾杉林", "terrain_id": "1", "landmark": "倒下的巨杉旁", "cell_ids": []},
       "personality": ["克制", "敏锐", "善待弱者", "不喜欢空口承诺"],
       "conversation_style": "语速很慢，常以植物的习性比喻人的选择。",
@@ -36,6 +37,7 @@
       "gender": "男",
       "race": "人类",
       "appearance": "皮肤被风沙磨得粗粝，黑色头巾遮住半张脸，腰间挂着两把弯匕。",
+      "image_url": "/assets/vendor/game-icons/delapouite/pirate-captain.svg",
       "location": {"region": "赤砂商道", "terrain_id": "5", "landmark": "倾倒的盐车后", "cell_ids": []},
       "personality": ["多疑", "精于算计", "敬畏强者", "讨厌被揭穿"],
       "conversation_style": "句子简短，习惯把每个问题反问回来。",
@@ -76,6 +78,7 @@
       "gender": "女",
       "race": "矮人",
       "appearance": "赤褐长辫盘在后脑，前臂满是烫伤，护目镜上有一道明显裂纹。",
+      "image_url": "/assets/vendor/game-icons/delapouite/barbarian.svg",
       "location": {"region": "断脊山道", "terrain_id": "2", "landmark": "废弃升降机前", "cell_ids": []},
       "personality": ["直率", "好胜", "重视手艺", "嘴硬心软"],
       "conversation_style": "说话像敲铁：短、响，偶尔夹一句不太高明的玩笑。",
@@ -96,7 +99,61 @@
         "requires_memory_tags": []
       }],
       "combat_triggers": []
+    },
+    {
+      "npc_id": "seren_gravewarden", "name": "瑟伦·守碑", "title": "月影谷的守墓人", "gender": "男", "race": "人类", "appearance": "身披褪色灰斗篷，左手提一盏永不熄灭的蓝灯，腰间挂满无名墓碑的拓片。", "image_url": "/assets/vendor/game-icons/delapouite/vampire-dracula.svg",
+      "location": {"region": "月影谷", "terrain_id": "17", "landmark": "沉月墓园", "cell_ids": []},
+      "personality": ["寡言", "谨慎", "尊重亡者", "厌恶盗墓者"], "conversation_style": "说话低沉，回答前常先确认附近是否还有别人在听。",
+      "backstory": {"public_summary": "守护沉月墓园二十余年，替无名死者记录遗物与死亡地点。", "personal_goal": "找回被盗走的七块姓名牌，让徘徊墓园的亡魂得到安息。", "private_secret": "其中一块姓名牌属于他本人；瑟伦从不解释自己为何仍像活人一样行走。"},
+      "equipment": {"weapon_id": "6", "armor_id": "4", "items": {"5": 1}, "valuables": ["蓝焰守墓灯", "无名碑拓片"]},
+      "combat": {"character_id": "6", "weapon_id": "6", "armor_id": "4", "item_id": "5", "item_count": 1, "threat": 6, "tactics": ["诅咒盗墓者", "生命汲取", "保护墓碑"], "arena": "沉月墓园的蓝灯石径"},
+      "initial_disposition": {"affinity": 0, "trust": -4, "respect": 5, "hostility": 4},
+      "story_hooks": [{"hook_id": "seren_stolen_nameplates", "title": "失窃的姓名牌", "summary": "替瑟伦追回七块被盗姓名牌，并查明盗墓者为何只拿走这些墓碑。", "min_affinity": -10, "min_trust": -10, "requires_memory_tags": []}],
+      "combat_triggers": [{"trigger_id": "seren_defend_graves", "title": "守墓人的警告", "intro": "瑟伦横过蓝焰灯杖：‘再碰一次墓碑，我就把你的名字也刻在这里。’", "conditions": [{"kind": "message_contains", "field": null, "values": ["挖坟", "拿走遗物", "砸墓碑", "动手"], "threshold": null}], "repeatable": false}]
+    },
+    {
+      "npc_id": "tala_caravanmaster", "name": "塔菈·金辙", "title": "琥珀草原的商队领队", "gender": "女", "race": "人类", "appearance": "高束黑发间编着铜铃，披风内侧缝有九条商路的彩线地图。", "image_url": "/assets/vendor/game-icons/delapouite/cleopatra.svg",
+      "location": {"region": "琥珀草原", "terrain_id": "13", "landmark": "百帐集会场", "cell_ids": []},
+      "personality": ["爽朗", "守信", "精明", "保护商队"], "conversation_style": "语速很快，喜欢把风险和报酬直接折算成数字。",
+      "backstory": {"public_summary": "带领金辙商队往返九域，擅长在战争、风雪和税卡之间找到还能通行的路。", "personal_goal": "查清连续三支小商队失踪的原因，重新打通北方贸易线。", "private_secret": "她已经发现失踪与某位地方领主有关，却缺少能公开指控的证据。"},
+      "equipment": {"weapon_id": "5", "armor_id": "3", "items": {"1": 2, "4": 1}, "valuables": ["九域彩线地图", "商队铜印"]},
+      "combat": {"character_id": "5", "weapon_id": "5", "armor_id": "3", "item_id": "1", "item_count": 2, "threat": 5, "tactics": ["保持距离", "风箭打断", "保护货车"], "arena": "琥珀草原的商队车阵"},
+      "initial_disposition": {"affinity": 6, "trust": 0, "respect": 2, "hostility": 0},
+      "story_hooks": [{"hook_id": "tala_missing_caravans", "title": "消失的三支商队", "summary": "沿北方商路调查三支商队失踪现场，并寻找领主私兵留下的证据。", "min_affinity": 0, "min_trust": 0, "requires_memory_tags": []}],
+      "combat_triggers": [{"trigger_id": "tala_defend_caravan", "title": "车阵前的弓弦", "intro": "塔菈抬弓封住货车入口：‘商队不拒绝客人，但会埋掉强盗。’", "conditions": [{"kind": "message_contains", "field": null, "values": ["抢货", "打劫", "交出货物", "袭击"], "threshold": null}], "repeatable": false}]
+    },
+    {
+      "npc_id": "orin_tidekeeper", "name": "奥林·潮誓", "title": "翡翠海岸的守潮人", "gender": "男", "race": "海裔", "appearance": "皮肤带着浅蓝鳞光，肩背一柄珊瑚长弓，脖颈挂着碎裂的灯塔透镜。", "image_url": "/assets/vendor/game-icons/delapouite/pirate-captain.svg",
+      "location": {"region": "翡翠海岸", "terrain_id": "19", "landmark": "翡翠灯塔", "cell_ids": []},
+      "personality": ["沉着", "重视传统", "警惕外乡船队", "富有同情心"], "conversation_style": "句子像潮汐一样有规律，重要的话会重复两遍。",
+      "backstory": {"public_summary": "负责记录潮汐、救援搁浅船只并维护翡翠灯塔的古老透镜。", "personal_goal": "修复灯塔透镜，在下一次无月大潮前重新点亮航标。", "private_secret": "透镜并非自然碎裂，而是被一艘不该存在于航海记录中的黑船击中。"},
+      "equipment": {"weapon_id": "5", "armor_id": "5", "items": {"3": 1}, "valuables": ["碎裂灯塔透镜", "守潮骨哨"]},
+      "combat": null,
+      "initial_disposition": {"affinity": 3, "trust": -2, "respect": 1, "hostility": 0},
+      "story_hooks": [{"hook_id": "orin_broken_lens", "title": "破碎的灯塔之眼", "summary": "收集月白珍珠与纯净珊瑚，帮助奥林修复灯塔透镜。", "min_affinity": 0, "min_trust": -5, "requires_memory_tags": []}],
+      "combat_triggers": []
+    },
+    {
+      "npc_id": "maela_courier", "name": "梅菈·灰羽", "title": "负伤的边境信使", "gender": "女", "race": "人类", "appearance": "右腿缠着渗血绷带，灰羽披肩被利爪撕开，怀里仍死死护着一只封蜡信筒。", "image_url": "/assets/vendor/game-icons/delapouite/woman-elf-face.svg",
+      "location": {"region": "霜冠冻土", "terrain_id": "13", "landmark": "北境旧驿道", "cell_ids": []},
+      "personality": ["坚韧", "守密", "急切", "不愿拖累别人"], "conversation_style": "因伤势说得断断续续，但涉及信件内容时立刻变得非常警觉。",
+      "backstory": {"public_summary": "来自北境驿站的正式信使，负责传递各国不会交给魔法通讯的重要文书。", "personal_goal": "在追兵赶到前把密信送往断脊山道。", "private_secret": "信筒里没有军令，而是一份请求邻国收留霜冠难民的秘密协议。"},
+      "equipment": {"weapon_id": "2", "armor_id": "3", "items": {"1": 1}, "valuables": ["王室封蜡信筒"]},
+      "combat": {"character_id": "2", "weapon_id": "2", "armor_id": "3", "item_id": "1", "item_count": 1, "threat": 3, "tactics": ["闪避", "保护信筒", "寻找脱离路线"], "arena": "风雪覆盖的北境旧驿道"},
+      "initial_disposition": {"affinity": 1, "trust": -8, "respect": 0, "hostility": 2},
+      "story_hooks": [{"hook_id": "maela_sealed_dispatch", "title": "必须送达的密信", "summary": "护送负伤的梅菈穿过霜骨亡兵出没的旧驿道。", "min_affinity": -5, "min_trust": -10, "requires_memory_tags": []}],
+      "combat_triggers": [{"trigger_id": "maela_protect_dispatch", "title": "信筒不可落手", "intro": "梅菈忍痛拔出短刃：‘我可以死，信不能给你。’", "conditions": [{"kind": "message_contains", "field": null, "values": ["交出信", "抢走信筒", "搜身", "动手"], "threshold": null}], "repeatable": false}]
+    },
+    {
+      "npc_id": "hadrik_reeve", "name": "哈德里克·旧橡", "title": "雾杉边村的里正", "gender": "男", "race": "人类", "appearance": "白胡须用麻绳束起，拄着一根刻满村民姓名的老橡木杖。", "image_url": "/assets/vendor/game-icons/delapouite/wizard-face.svg",
+      "location": {"region": "雾杉林", "terrain_id": "9", "landmark": "林缘村庄", "cell_ids": []},
+      "personality": ["温和", "固执", "熟悉地方传说", "保护孩子"], "conversation_style": "喜欢从很久以前讲起，但每个故事最终都会落到一件现实的麻烦上。",
+      "backstory": {"public_summary": "管理林缘村庄四十年，记得每条猎径、每口废井和每户人家的旧账。", "personal_goal": "找到在月圆夜失踪的牧童，并查明村外为何出现本应绝迹的狼群。", "private_secret": "牧童是他偷偷收养的战乱遗孤，他一直隐瞒孩子真正的姓氏。"},
+      "equipment": {"weapon_id": "6", "armor_id": "1", "items": {"1": 1}, "valuables": ["刻名老橡木杖", "村库铁钥匙"]},
+      "combat": null,
+      "initial_disposition": {"affinity": 8, "trust": 3, "respect": 0, "hostility": 0},
+      "story_hooks": [{"hook_id": "hadrik_missing_shepherd", "title": "月夜失踪的牧童", "summary": "寻找失踪牧童留下的足迹，并判断狼群究竟在追猎还是保护他。", "min_affinity": 0, "min_trust": 0, "requires_memory_tags": []}],
+      "combat_triggers": []
     }
   ]
 }
-
