@@ -9,7 +9,8 @@
       "str": 9,
       "agi": 4,
       "int": 3,
-      "desc": "血厚防高，精通近战物理压制。"
+      "desc": "血厚防高，精通近战物理压制。",
+      "image_url": "/assets/vendor/game-icons/delapouite/barbarian.svg"
     },
     "2": {
       "id": 2,
@@ -19,7 +20,8 @@
       "str": 6,
       "agi": 10,
       "int": 5,
-      "desc": "身板脆弱，极高闪避与暴击率。"
+      "desc": "身板脆弱，极高闪避与暴击率。",
+      "image_url": "/assets/vendor/game-icons/delapouite/pirate-captain.svg"
     },
     "3": {
       "id": 3,
@@ -29,7 +31,8 @@
       "str": 2,
       "agi": 6,
       "int": 10,
-      "desc": "以庞大蓝量驱动高额魔法爆发。"
+      "desc": "以庞大蓝量驱动高额魔法爆发。",
+      "image_url": "/assets/vendor/game-icons/delapouite/wizard-face.svg"
     },
     "4": {
       "id": 4,
@@ -39,7 +42,8 @@
       "str": 7,
       "agi": 4,
       "int": 6,
-      "desc": "半坦半奶，攻守兼备。"
+      "desc": "半坦半奶，攻守兼备。",
+      "image_url": "/assets/vendor/game-icons/delapouite/cleopatra.svg"
     },
     "5": {
       "id": 5,
@@ -49,7 +53,8 @@
       "str": 5,
       "agi": 9,
       "int": 4,
-      "desc": "游侠，行动敏捷，打断对手节奏。"
+      "desc": "游侠，行动敏捷，打断对手节奏。",
+      "image_url": "/assets/vendor/game-icons/delapouite/woman-elf-face.svg"
     },
     "6": {
       "id": 6,
@@ -59,7 +64,8 @@
       "str": 4,
       "agi": 5,
       "int": 8,
-      "desc": "精通巫术与剧毒，擅长消耗战。"
+      "desc": "精通巫术与剧毒，擅长消耗战。",
+      "image_url": "/assets/vendor/game-icons/delapouite/vampire-dracula.svg"
     }
   },
   "weapons": {
@@ -71,6 +77,7 @@
       "type": "phys",
       "value": 40,
       "desc": "重型剑，破甲良好。",
+      "image_url": "/assets/vendor/game-icons/skoll/gladius.svg",
       "skills": [
         {
           "id": "1",
@@ -89,6 +96,7 @@
       "type": "phys",
       "value": 60,
       "desc": "极速攻速，淬有剧毒。",
+      "image_url": "/assets/vendor/game-icons/lorc/crossed-swords.svg",
       "skills": [
         {
           "id": "1",
@@ -108,6 +116,7 @@
       "type": "magic",
       "value": 80,
       "desc": "蕴含火元素。",
+      "image_url": "/assets/vendor/game-icons/lorc/crystal-wand.svg",
       "skills": [
         {
           "id": "1",
@@ -126,6 +135,7 @@
       "type": "phys",
       "value": 50,
       "desc": "塔盾与钢枪。",
+      "image_url": "/assets/vendor/game-icons/delapouite/tribal-shield.svg",
       "skills": [
         {
           "id": "1",
@@ -145,6 +155,7 @@
       "type": "phys",
       "value": 70,
       "desc": "轻巧的精灵长弓。",
+      "image_url": "/assets/vendor/game-icons/delapouite/bow-arrow.svg",
       "skills": [
         {
           "id": "1",
@@ -163,6 +174,7 @@
       "type": "magic",
       "value": 90,
       "desc": "带有诅咒的枯木短杖。",
+      "image_url": "/assets/vendor/game-icons/lorc/wizard-staff.svg",
       "skills": [
         {
           "id": "1",
@@ -183,7 +195,8 @@
       "hp_bonus": 0,
       "def_rate": 0.0,
       "value": 0,
-      "desc": "没有任何额外防御力的粗布便服。"
+      "desc": "没有任何额外防御力的粗布便服。",
+      "image_url": "/assets/vendor/game-icons/lucasms/shirt.svg"
     },
     "1": {
       "id": 1,
@@ -191,7 +204,8 @@
       "hp_bonus": 0,
       "def_rate": 0,
       "value": 0,
-      "desc": "无特殊加成。"
+      "desc": "无特殊加成。",
+      "image_url": "/assets/vendor/game-icons/lucasms/shirt.svg"
     },
     "2": {
       "id": 2,
@@ -199,7 +213,8 @@
       "hp_bonus": 30,
       "def_rate": 0.3,
       "value": 50,
-      "desc": "物理减伤30%，略微降低敏捷。"
+      "desc": "物理减伤30%，略微降低敏捷。",
+      "image_url": "/assets/vendor/game-icons/lorc/plastron.svg"
     },
     "3": {
       "id": 3,
@@ -207,7 +222,8 @@
       "hp_bonus": 10,
       "def_rate": 0.1,
       "value": 45,
-      "desc": "受伤害减10%，大幅提升闪避。"
+      "desc": "受伤害减10%，大幅提升闪避。",
+      "image_url": "/assets/vendor/game-icons/delapouite/cape.svg"
     },
     "4": {
       "id": 4,
@@ -215,7 +231,8 @@
       "hp_bonus": 5,
       "def_rate": 0,
       "value": 60,
-      "desc": "受魔伤减20%，法术判定大优势。"
+      "desc": "受魔伤减20%，法术判定大优势。",
+      "image_url": "/assets/vendor/game-icons/lorc/robe.svg"
     },
     "5": {
       "id": 5,
@@ -223,7 +240,8 @@
       "hp_bonus": 20,
       "def_rate": 0.18,
       "value": 75,
-      "desc": "全防，并提供部分环境免疫。"
+      "desc": "全防，并提供部分环境免疫。",
+      "image_url": "/assets/vendor/game-icons/delapouite/tribal-gear.svg"
     },
     "6": {
       "id": 6,
@@ -231,7 +249,8 @@
       "hp_bonus": 15,
       "def_rate": 0.05,
       "value": 90,
-      "desc": "受击时有概率偏斜完全免疫伤害。"
+      "desc": "受击时有概率偏斜完全免疫伤害。",
+      "image_url": "/assets/vendor/game-icons/lorc/crystal-growth.svg"
     }
   },
   "items": {
@@ -241,7 +260,8 @@
       "type": "heal_hp",
       "val": 40,
       "value": 15,
-      "desc": "立即恢复 40 点 HP。"
+      "desc": "立即恢复 40 点 HP。",
+      "image_url": "/assets/vendor/game-icons/lorc/potion-ball.svg"
     },
     "2": {
       "id": 2,
@@ -249,7 +269,8 @@
       "type": "heal_mp",
       "val": 50,
       "value": 15,
-      "desc": "立即恢复 50 点 MP。"
+      "desc": "立即恢复 50 点 MP。",
+      "image_url": "/assets/vendor/game-icons/lorc/round-bottom-flask.svg"
     },
     "3": {
       "id": 3,
@@ -257,7 +278,8 @@
       "type": "dmg",
       "val": 25,
       "value": 20,
-      "desc": "25点无视防御真伤。"
+      "desc": "25点无视防御真伤。",
+      "image_url": "/assets/vendor/game-icons/lorc/fire-bomb.svg"
     },
     "4": {
       "id": 4,
@@ -265,7 +287,8 @@
       "type": "dmg",
       "val": 15,
       "value": 25,
-      "desc": "15点真伤，概率附加眩晕。"
+      "desc": "15点真伤，概率附加眩晕。",
+      "image_url": "/assets/vendor/game-icons/delapouite/bolt-bomb.svg"
     },
     "5": {
       "id": 5,
@@ -273,7 +296,8 @@
       "type": "heal_hp",
       "val": 15,
       "value": 10,
-      "desc": "恢复15HP，并解除身上一切异常。"
+      "desc": "恢复15HP，并解除身上一切异常。",
+      "image_url": "/assets/vendor/game-icons/delapouite/olive.svg"
     },
     "6": {
       "id": 6,
@@ -281,7 +305,8 @@
       "type": "heal_both",
       "val": 25,
       "value": 30,
-      "desc": "同时恢复 25 生命值与 25 魔力。"
+      "desc": "同时恢复 25 生命值与 25 魔力。",
+      "image_url": "/assets/vendor/game-icons/lorc/round-bottom-flask.svg"
     }
   },
   "resources": {
@@ -290,42 +315,48 @@
       "name": "原木",
       "emoji": "🪵",
       "desc": "基础建筑与打造材料",
-      "value": 5
+      "value": 5,
+      "image_url": "/assets/vendor/game-icons/delapouite/log.svg"
     },
     "mat_2": {
       "id": "mat_2",
       "name": "石块",
       "emoji": "🪨",
       "desc": "坚硬的矿石",
-      "value": 5
+      "value": 5,
+      "image_url": "/assets/vendor/game-icons/lorc/rock.svg"
     },
     "mat_3": {
       "id": "mat_3",
       "name": "发光蘑菇",
       "emoji": "🍄",
       "desc": "炼金绝佳材料",
-      "value": 15
+      "value": 15,
+      "image_url": "/assets/vendor/game-icons/delapouite/mushrooms.svg"
     },
     "mat_4": {
       "id": "mat_4",
       "name": "鲜鱼",
       "emoji": "🐟",
       "desc": "恢复体力的食材",
-      "value": 10
+      "value": 10,
+      "image_url": "/assets/vendor/game-icons/darkzaitzev/fried-fish.svg"
     },
     "mat_5": {
       "id": "mat_5",
       "name": "铁矿",
       "emoji": "⛏️",
       "desc": "锻造武器的刚需",
-      "value": 20
+      "value": 20,
+      "image_url": "/assets/vendor/game-icons/lorc/crystal-bars.svg"
     },
     "mat_6": {
       "id": "mat_6",
       "name": "草药",
       "emoji": "🌿",
       "desc": "制作治疗药水",
-      "value": 8
+      "value": 8,
+      "image_url": "/assets/vendor/game-icons/delapouite/olive.svg"
     }
   },
   "environments": [
