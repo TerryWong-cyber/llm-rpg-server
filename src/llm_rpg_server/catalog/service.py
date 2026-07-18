@@ -25,7 +25,7 @@ class Catalog:
         self.environments = payload["environments"]
         self.rules = payload["rules"]
         self._lock = RLock()
-        self._apply_crafting_defaults()
+        self._apply_item_policy_defaults()
         self._validate()
 
     def public_view(self) -> dict[str, Any]:
@@ -62,10 +62,19 @@ class Catalog:
             value = collection.get(item_id)
             return deepcopy(value) if value is not None else None
 
-    def _apply_crafting_defaults(self) -> None:
-        for collection in (self.weapons, self.armors, self.items, self.resources):
+    def _apply_item_policy_defaults(self) -> None:
+        for item_type, collection in (
+            ("weapon", self.weapons),
+            ("armor", self.armors),
+            ("item", self.items),
+            ("material", self.resources),
+        ):
             for definition in collection.values():
                 definition.setdefault("can_be_ingredient", True)
+                definition.setdefault("tradable", True)
+                definition.setdefault("category", item_type)
+                definition.setdefault("tags", [])
+                definition.setdefault("use_contexts", [])
 
     @staticmethod
     def _public_collection(collection: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:

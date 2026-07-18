@@ -13,6 +13,7 @@ from llm_rpg_server.crafting import (
     OpenAIItemImageGenerator,
 )
 from llm_rpg_server.exploration import ExplorationService
+from llm_rpg_server.items import ItemService
 from llm_rpg_server.monsters import MonsterCatalog
 from llm_rpg_server.npcs import InMemoryWorldRepository, NPCDialogueService, NPCInteractionService
 from llm_rpg_server.npcs.loader import seed_npcs
@@ -33,6 +34,7 @@ class AppContainer:
     player_service: PlayerService
     growth: GrowthService
     economy: EconomyService
+    items: ItemService
     world_repository: InMemoryWorldRepository
     npc_interactions: NPCInteractionService
     exploration: ExplorationService
@@ -56,6 +58,7 @@ def build_container() -> AppContainer:
     player_service = PlayerService(players, catalog, content)
     growth = GrowthService(players, player_service, content)
     economy = EconomyService(players, catalog, content)
+    items = ItemService(players, catalog, content)
     llm = create_llm(settings)
     world_repository = InMemoryWorldRepository()
     seed_npcs(world_repository, content)
@@ -98,7 +101,7 @@ def build_container() -> AppContainer:
         growth,
         monsters,
     )
-    world_events = WorldEventCoordinator(exploration, npc_interactions, monsters, combat)
+    world_events = WorldEventCoordinator(exploration, npc_interactions, monsters, combat, items)
     exploration.set_event_participant_resolver(world_events)
     container = AppContainer(
         settings=settings,
@@ -108,6 +111,7 @@ def build_container() -> AppContainer:
         player_service=player_service,
         growth=growth,
         economy=economy,
+        items=items,
         world_repository=world_repository,
         npc_interactions=npc_interactions,
         exploration=exploration,

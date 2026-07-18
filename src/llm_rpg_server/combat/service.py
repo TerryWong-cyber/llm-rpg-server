@@ -57,6 +57,7 @@ class CombatSessionService:
 
     def add_ai(self, room_id: str) -> GameRoom:
         room = self.rooms.get(room_id)
+        should_prepare = False
         with room.state_lock:
             if room.p2_id and room.p2_id != "AI_BOT":
                 raise ValueError(self.content.text("errors.room.full"))
@@ -64,12 +65,15 @@ class CombatSessionService:
             room.mode = "PvE"
             if not room.is_started:
                 room.is_started = True
+                should_prepare = True
                 self.engine.app.invoke({
                     "messages": [],
                     "player_id": room.p1_id,
                     "p2_id": room.p2_id,
                     "game_mode": room.mode,
                 }, config=self.config(room))
+        if should_prepare:
+            self._prepare_pve_player(room)
         return room
 
     def start_pvp_if_ready(self, room: GameRoom) -> bool:
@@ -134,6 +138,7 @@ class CombatSessionService:
             "ai_stats": enemy_stats.model_dump(mode="json"),
             "reward_policy": "configured_opponent",
         })
+        self._prepare_pve_player(room)
         return room
 
     def start_monster_combat(
@@ -197,6 +202,7 @@ class CombatSessionService:
             "ai_stats": enemy_stats.model_dump(mode="json"),
             "reward_policy": "configured_opponent",
         })
+        self._prepare_pve_player(room)
         return room
 
     def submit_prep(self, room: GameRoom, player_id: str, payload: dict[str, str | None]) -> dict[str, Any] | None:
@@ -234,10 +240,22 @@ class CombatSessionService:
         room.p2_prep = None
         return self.snapshot(room)
 
-    def submit_action(self, room: GameRoom, player_id: str, action_key: str) -> dict[str, Any] | None:
+    def submit_action(
+        self,
+        room: GameRoom,
+        player_id: str,
+        action_key: str,
+        item_id: str | None = None,
+    ) -> dict[str, Any] | None:
         is_p1 = self._member_side(room, player_id)
-        values = self.engine.app.get_state(self.config(room)).values
+        config = self.config(room)
+        values = self.engine.app.get_state(config).values
         prefix = "player" if is_p1 else "ai"
+        if action_key == "i":
+            if not item_id:
+                raise ValueError(self.content.text("errors.room.item_unavailable"))
+            self.engine.app.update_state(config, self._combat_item_state(player_id, item_id, prefix))
+            values = self.engine.app.get_state(config).values
         action = self.engine.action_from_key(
             action_key,
             values[f"{prefix}_weapon"],
@@ -265,7 +283,6 @@ class CombatSessionService:
                 values.get("ai_race_skills", []),
             )
             self._validate_action(values, "ai", updates["ai_action"])
-        config = self.config(room)
         self.engine.app.update_state(config, updates)
         for _ in self.engine.app.stream(None, config=config):
             pass
@@ -279,6 +296,31 @@ class CombatSessionService:
         if game_over:
             self.observability.flush()
         return self.snapshot(room)
+
+    def _prepare_pve_player(self, room: GameRoom) -> None:
+        if room.mode != "PvE":
+            return
+        profile = self.players.get(room.p1_id)
+        payload = {
+            "weapon_id": profile.equipped_weapon_id,
+            "armor_id": profile.equipped_armor_id,
+            "item_id": None,
+        }
+        if self.submit_prep(room, room.p1_id, payload) is None:
+            raise RuntimeError("PvE equipped loadout did not advance combat")
+
+    def _combat_item_state(self, player_id: str, item_id: str, prefix: str) -> dict[str, Any]:
+        profile = self.players.get(player_id)
+        definition = self.catalog.items.get(item_id)
+        if definition is None or profile.inventory.items.get(item_id, 0) <= 0:
+            raise ValueError(self.content.text("errors.inventory.not_owned"))
+        if "combat" not in definition.get("use_contexts", []):
+            raise ValueError(self.content.text("errors.inventory.context_forbidden"))
+        return {
+            f"{prefix}_item": definition,
+            f"{prefix}_item_id": item_id,
+            f"{prefix}_item_count": profile.inventory.items[item_id],
+        }
 
     def snapshot(self, room: GameRoom) -> dict[str, Any]:
         state_snapshot = self.engine.app.get_state(self.config(room))
@@ -381,6 +423,8 @@ class CombatSessionService:
             raise ValueError(self.content.text("errors.inventory.not_owned"))
         if item_id and (profile.inventory.items.get(item_id, 0) <= 0 or item_id not in self.catalog.items):
             raise ValueError(self.content.text("errors.inventory.not_owned"))
+        if item_id and "combat" not in self.catalog.items[item_id].get("use_contexts", []):
+            raise ValueError(self.content.text("errors.inventory.context_forbidden"))
 
     def _loadout_state(
         self,
@@ -528,6 +572,15 @@ class CombatSessionService:
         profile = self.players.get(player_id)
         if profile.current_hp <= 0:
             raise ValueError(self.content.text("errors.room.incapacitated"))
+        if (
+            not profile.equipped_weapon_id
+            or profile.equipped_weapon_id not in profile.inventory.weapons
+            or profile.equipped_weapon_id not in self.catalog.weapons
+            or not profile.equipped_armor_id
+            or profile.equipped_armor_id not in profile.inventory.armors
+            or profile.equipped_armor_id not in self.catalog.armors
+        ):
+            raise ValueError(self.content.text("errors.room.equipment_required"))
 
     def _grant_monster_reward(self, profile, monster: MonsterDefinition, seed: str) -> dict[str, Any]:
         rng = random.Random(f"{seed}:{monster.monster_id}")

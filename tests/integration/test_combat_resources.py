@@ -16,11 +16,7 @@ def test_combat_uses_and_persists_global_resources():
     container.combat.engine.effectiveness.llm = None
     room = container.combat.create_room(profile.player_id)
     container.combat.add_ai(room.room_id)
-    snapshot = container.combat.submit_prep(room, profile.player_id, {
-        "weapon_id": "1",
-        "armor_id": "0",
-        "item_id": None,
-    })
+    snapshot = container.combat.snapshot(room)
 
     assert snapshot is not None
     assert snapshot["state"]["player_hp"] == before.current_hp
@@ -37,11 +33,7 @@ def test_combat_uses_and_persists_global_resources():
 
     next_room = container.combat.create_room(profile.player_id)
     container.combat.add_ai(next_room.room_id)
-    next_prep = container.combat.submit_prep(next_room, profile.player_id, {
-        "weapon_id": "1",
-        "armor_id": "0",
-        "item_id": None,
-    })
+    next_prep = container.combat.snapshot(next_room)
 
     assert next_prep is not None
     assert next_prep["state"]["player_hp"] == persisted.current_hp

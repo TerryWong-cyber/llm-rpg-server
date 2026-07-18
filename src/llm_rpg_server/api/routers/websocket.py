@@ -44,6 +44,7 @@ async def room_socket(websocket: WebSocket, room_id: str, player_id: str):
                             room,
                             player_id,
                             str(data.get("action_key", "")),
+                            str(data["item_id"]) if data.get("item_id") else None,
                         )
                     else:
                         raise ValueError(container.content.text("errors.room.invalid_action"))

@@ -1109,6 +1109,14 @@ class ExplorationService:
                 if action.get("resolution", "keep_active") not in {"keep_active", "end_event"}:
                     raise ValueError(f"World event {event_id} action {action_id} has an invalid resolution")
                 if action.get("kind", "narrative") not in {
-                    "narrative", "open_npc", "start_quest", "npc_combat", "monster_combat"
+                    "narrative", "open_npc", "start_quest", "npc_combat", "monster_combat", "use_item"
                 }:
                     raise ValueError(f"World event {event_id} action {action_id} has an invalid kind")
+                if action.get("kind") == "use_item":
+                    requirements = action.get("item_requirements")
+                    if not isinstance(requirements, dict) or not any(
+                        requirements.get(key) for key in ("categories", "all_tags", "any_tags")
+                    ):
+                        raise ValueError(
+                            f"World event {event_id} action {action_id} requires item matching rules"
+                        )

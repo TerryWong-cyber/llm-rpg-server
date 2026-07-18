@@ -25,6 +25,10 @@ class CraftResult(BaseModel):
     combat_stat: int = Field(ge=0)
     image_url: str = ""
     can_be_ingredient: bool
+    tradable: bool = True
+    use_contexts: list[Literal["combat", "exploration", "world_event"]] = Field(default_factory=list)
+    category: str = "misc"
+    tags: list[str] = Field(default_factory=list)
     ingredient_ancestry: list[ItemReference] = Field(default_factory=list, exclude=True)
 
     def public_dict(self) -> dict:
@@ -39,6 +43,10 @@ class CraftDecision(BaseModel):
     name: str = Field(default="", max_length=40)
     desc: str = Field(default="", max_length=50)
     can_be_ingredient: bool = False
+    tradable: bool = True
+    use_contexts: list[Literal["combat", "exploration", "world_event"]] = Field(default_factory=list)
+    category: str = Field(default="misc", max_length=30)
+    tags: list[str] = Field(default_factory=list, max_length=8)
 
     @model_validator(mode="after")
     def validate_success_payload(self) -> CraftDecision:

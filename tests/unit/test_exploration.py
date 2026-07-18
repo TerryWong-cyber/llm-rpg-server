@@ -321,4 +321,12 @@ def test_world_event_catalog_has_configured_participants_and_interactions(conten
         for rule in service.event_rules
         for action in rule.get("actions", [])
     }
-    assert {"narrative", "open_npc", "start_quest", "npc_combat", "monster_combat"} <= kinds
+    assert {"narrative", "open_npc", "start_quest", "npc_combat", "monster_combat", "use_item"} <= kinds
+    item_actions = [
+        action
+        for rule in service.event_rules
+        for action in rule.get("actions", [])
+        if action.get("kind") == "use_item"
+    ]
+    assert item_actions
+    assert all(action.get("item_requirements") for action in item_actions)

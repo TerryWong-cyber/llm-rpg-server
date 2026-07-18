@@ -47,7 +47,8 @@
     "weakness": {"name": "虚弱", "base_chance": 0.8, "duration": 4, "potency": 1, "max_stacks": 1, "persistent": true, "tags": ["negative"], "attribute_multipliers": {"strength": 0.75, "wisdom": 0.75}},
     "fear": {"name": "恐惧", "base_chance": 0.65, "duration": 2, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["negative", "mental"], "attribute_multipliers": {"agility": 0.75, "luck": 0.7}},
     "stun": {"name": "昏迷", "base_chance": 0.5, "duration": 1, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["negative", "incapacitating"]},
-    "root": {"name": "禁锢", "base_chance": 0.65, "duration": 2, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["negative", "movement_lock"], "attribute_multipliers": {"agility": 0.45}}
+    "root": {"name": "禁锢", "base_chance": 0.65, "duration": 2, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["negative", "movement_lock"], "attribute_multipliers": {"agility": 0.45}},
+    "well_fed": {"name": "饱食", "base_chance": 1.0, "duration": 3, "potency": 1, "max_stacks": 1, "persistent": true, "tags": ["positive", "food"], "attribute_multipliers": {"vitality": 1.08}}
   },
   "environment": {
     "fall": {"min_mass_kg": 1, "max_mass_kg": 1000, "max_height_m": 500, "energy_scale": 0.34},

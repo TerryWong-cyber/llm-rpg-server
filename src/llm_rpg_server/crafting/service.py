@@ -95,6 +95,10 @@ class CraftingService:
             item_type=item_type,
             combat_stat=combat_stat,
             can_be_ingredient=decision.can_be_ingredient,
+            tradable=decision.tradable,
+            use_contexts=(decision.use_contexts if item_type == "item" else []),
+            category=(decision.category.strip().lower() or item_type),
+            tags=sorted({tag.strip().lower() for tag in decision.tags if tag.strip()})[:8],
             ingredient_ancestry=self._ingredient_ancestry(
                 first_reference,
                 second_reference,
@@ -130,6 +134,18 @@ class CraftingService:
         second_info: dict[str, Any],
     ) -> None:
         inventory = profile.inventory
+        if any(
+            (
+                reference.item_type == "weapon"
+                and reference.item_id == profile.equipped_weapon_id
+            )
+            or (
+                reference.item_type == "armor"
+                and reference.item_id == profile.equipped_armor_id
+            )
+            for reference in (first, second)
+        ):
+            raise ValueError(self.content.text("errors.craft.equipped"))
         if first == second:
             quantities = {
                 "weapon": inventory.weapons.count(first.item_id),
@@ -184,6 +200,10 @@ class CraftingService:
             "desc": result.desc,
             "image_url": result.image_url,
             "can_be_ingredient": result.can_be_ingredient,
+            "tradable": result.tradable,
+            "use_contexts": result.use_contexts,
+            "category": result.category,
+            "tags": result.tags,
             "_crafting_ancestry": [reference.model_dump(mode="json") for reference in result.ingredient_ancestry],
         }
         if result.item_type == "weapon":

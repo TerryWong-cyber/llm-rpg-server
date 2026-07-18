@@ -9,8 +9,10 @@ from llm_rpg_server.api.schemas import (
     AttributeAllocationRequest,
     CraftRequest,
     CreateCharacterRequest,
+    EquipmentRequest,
     QuestCompleteRequest,
     TradeRequest,
+    UseItemRequest,
 )
 from llm_rpg_server.bootstrap import AppContainer
 from llm_rpg_server.crafting import ItemReference
@@ -38,6 +40,16 @@ def allocate_attributes(request: AttributeAllocationRequest, container: Containe
         "profile": profile.model_dump(mode="json"),
         "progression": container.growth.public_progress(profile),
     }
+
+
+@router.post("/character/equipment")
+def set_equipment(request: EquipmentRequest, container: Container):
+    profile = container.player_service.set_equipment(
+        request.player_id,
+        request.item_type,
+        request.item_id,
+    )
+    return {"status": "success", "profile": profile.model_dump(mode="json")}
 
 
 @router.post("/quest/complete")
@@ -74,6 +86,16 @@ def buy_item(request: TradeRequest, container: Container):
 def sell_item(request: TradeRequest, container: Container):
     profile = container.economy.sell(request.player_id, request.item_type, request.item_id)
     return _profile_or_snapshot(container, request.thread_id, profile.model_dump(mode="json"))
+
+
+@router.post("/use-item")
+def use_item(request: UseItemRequest, container: Container):
+    profile, outcome = container.items.use_outside_combat(request.player_id, request.item_id)
+    return {
+        "status": "success",
+        "profile": profile.model_dump(mode="json"),
+        "outcome": outcome.model_dump(mode="json"),
+    }
 
 
 @router.post("/craft")

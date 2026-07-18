@@ -6,6 +6,21 @@ from llm_rpg_server.exploration import ExplorationService
 from llm_rpg_server.players import GrowthService, InMemoryPlayerRepository, PlayerService
 
 
+def test_player_can_equip_and_unequip_owned_gear(content, catalog):
+    players = InMemoryPlayerRepository()
+    service = PlayerService(players, catalog, content)
+    player = service.create("装备测试者", "1")
+    with players.transaction(player.player_id) as profile:
+        profile.inventory.weapons.append("2")
+        profile.inventory.armors.append("2")
+    equipped = service.set_equipment(player.player_id, "weapon", "2")
+    assert equipped.equipped_weapon_id == "2"
+    equipped = service.set_equipment(player.player_id, "armor", "2")
+    assert equipped.equipped_armor_id == "2"
+    unequipped = service.set_equipment(player.player_id, "weapon", None)
+    assert unequipped.equipped_weapon_id is None
+
+
 def test_players_start_at_level_one_with_race_attributes(content, catalog):
     players = InMemoryPlayerRepository()
     service = PlayerService(players, catalog, content)

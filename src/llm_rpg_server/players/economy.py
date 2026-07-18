@@ -35,6 +35,8 @@ class EconomyService:
         definition = self.catalog.item_definition(item_type, item_id)
         if item_type not in {"weapon", "armor", "item"} or definition is None:
             raise ValueError(self.content.text("errors.inventory.invalid_item"))
+        if not definition.get("tradable", True):
+            raise ValueError(self.content.text("errors.inventory.not_tradable"))
         with self.players.transaction(player_id) as profile:
             inventory = profile.inventory
             if item_type == "weapon" and item_id in inventory.weapons:
@@ -59,17 +61,23 @@ class EconomyService:
         definition = self.catalog.item_definition(item_type, item_id)
         if definition is None:
             raise ValueError(self.content.text("errors.inventory.invalid_item"))
+        if not definition.get("tradable", True):
+            raise ValueError(self.content.text("errors.inventory.not_tradable"))
         with self.players.transaction(player_id) as profile:
             inventory = profile.inventory
             if item_type == "weapon":
                 if item_id not in inventory.weapons:
                     raise ValueError(self.content.text("errors.inventory.not_owned"))
+                if profile.equipped_weapon_id == item_id:
+                    raise ValueError(self.content.text("errors.inventory.equipped"))
                 if len(inventory.weapons) <= 1:
                     raise ValueError(self.content.text("errors.inventory.keep_weapon"))
                 inventory.weapons.remove(item_id)
             elif item_type == "armor":
                 if item_id not in inventory.armors:
                     raise ValueError(self.content.text("errors.inventory.not_owned"))
+                if profile.equipped_armor_id == item_id:
+                    raise ValueError(self.content.text("errors.inventory.equipped"))
                 if item_id == "0":
                     raise ValueError(self.content.text("errors.inventory.starter_armor"))
                 if len(inventory.armors) <= 1:

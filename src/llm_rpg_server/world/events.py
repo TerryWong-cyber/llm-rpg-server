@@ -7,6 +7,7 @@ from llm_rpg_server.combat import CombatSessionService
 from llm_rpg_server.combat.rooms import GameRoom
 from llm_rpg_server.exploration import ExplorationService, MapInstance
 from llm_rpg_server.exploration.models import WorldEventResult
+from llm_rpg_server.items import ItemService
 from llm_rpg_server.monsters import MonsterCatalog
 from llm_rpg_server.npcs import NPCInteractionService
 
@@ -28,11 +29,13 @@ class WorldEventCoordinator:
         npcs: NPCInteractionService,
         monsters: MonsterCatalog,
         combat: CombatSessionService,
+        items: ItemService,
     ):
         self.exploration = exploration
         self.npcs = npcs
         self.monsters = monsters
         self.combat = combat
+        self.items = items
         self._validate_references()
 
     def public_participant(self, rule: dict[str, Any]) -> dict[str, Any] | None:
@@ -52,13 +55,23 @@ class WorldEventCoordinator:
         player_id: str,
         event_id: str,
         action_id: str,
+        item_id: str | None = None,
     ) -> EventInteractionOutcome:
         rule, action = self.exploration.validate_event_action(player_id, event_id, action_id)
         kind = action.get("kind", "narrative")
         interaction: dict[str, Any] = {"type": kind}
         room: GameRoom | None = None
 
-        if kind == "open_npc":
+        if kind == "use_item":
+            if not item_id:
+                raise ValueError(self.items.content.text("errors.inventory.event_item_required"))
+            usage = self.items.consume_for_event(
+                player_id,
+                item_id,
+                action.get("item_requirements", {}),
+            )
+            interaction.update({"item_id": item_id, "item_use": usage.model_dump(mode="json")})
+        elif kind == "open_npc":
             interaction["npc_id"] = action["target_id"]
         elif kind == "start_quest":
             hook = self.npcs.activate_story_hook(
@@ -95,6 +108,19 @@ class WorldEventCoordinator:
         current, event = self.exploration.event_action(player_id, event_id, action_id)
         return EventInteractionOutcome(current, event, interaction, room)
 
+    def item_options(self, player_id: str, event_id: str) -> dict[str, list[dict[str, Any]]]:
+        rule = next((item for item in self.exploration.event_rules if item["event_id"] == event_id), None)
+        if rule is None:
+            return {}
+        return {
+            action["action_id"]: [
+                option.model_dump(mode="json")
+                for option in self.items.event_options(player_id, action.get("item_requirements", {}))
+            ]
+            for action in rule.get("actions", [])
+            if action.get("kind") == "use_item"
+        }
+
     def _validate_references(self) -> None:
         npc_ids = {npc.npc_id for npc in self.npcs.repository.list_npcs()}
         monster_ids = {monster.monster_id for monster in self.monsters.list_all()}
@@ -124,3 +150,5 @@ class WorldEventCoordinator:
                         raise ValueError(f"World event {event_id} references an unknown combat trigger")
                 if kind == "monster_combat" and target_id not in monster_ids:
                     raise ValueError(f"World event {event_id} references an unknown monster")
+                if kind == "use_item" and not action.get("item_requirements"):
+                    raise ValueError(f"World event {event_id} has item action without requirements")

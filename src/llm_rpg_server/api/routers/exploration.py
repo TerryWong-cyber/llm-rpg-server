@@ -137,6 +137,7 @@ def event_action(request: EventActionRequest, container: Container):
         request.player_id,
         request.event_id,
         request.action_id,
+        request.item_id,
     )
     response = _map_response(container, request.player_id, outcome.current, None)
     response["interaction"] = outcome.interaction
@@ -199,11 +200,19 @@ def _map_response(
             key: value.model_dump(mode="json")
             for key, value in container.exploration.actions(player_id).items()
         },
-        "event": (
-            event.model_dump(mode="json")
-            if (event := container.exploration.pop_latest_event(player_id)) else None
-        ),
+        "event": _event_payload(container, player_id),
         "event_log": [entry.model_dump(mode="json") for entry in profile.world_event_log],
         "transition": transition.model_dump(mode="json") if transition else None,
         "encounter": encounter.model_dump(mode="json") if encounter else None,
     }
+
+
+def _event_payload(container: AppContainer, player_id: str):
+    event = container.exploration.pop_latest_event(player_id)
+    if event is None:
+        return None
+    payload = event.model_dump(mode="json")
+    eligible = container.world_events.item_options(player_id, event.event_id)
+    for action in payload.get("actions", []):
+        action["eligible_items"] = eligible.get(action["action_id"], [])
+    return payload

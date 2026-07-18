@@ -33,6 +33,26 @@ class PlayerService:
             defaults,
         ))
 
+    def set_equipment(
+        self,
+        player_id: str,
+        item_type: str,
+        item_id: str | None,
+    ) -> PlayerProfile:
+        if item_type not in {"weapon", "armor"}:
+            raise ValueError(self.content.text("errors.inventory.invalid_type"))
+        with self.repository.transaction(player_id) as profile:
+            collection = profile.inventory.weapons if item_type == "weapon" else profile.inventory.armors
+            catalog = self.catalog.weapons if item_type == "weapon" else self.catalog.armors
+            if item_id is not None and (item_id not in collection or item_id not in catalog):
+                raise ValueError(self.content.text("errors.inventory.not_owned"))
+            if item_type == "weapon":
+                profile.equipped_weapon_id = item_id
+            else:
+                profile.equipped_armor_id = item_id
+                self.recalculate_resources(profile)
+        return self.repository.get(player_id)
+
     def _new_profile(
         self,
         player_id: str,

@@ -32,6 +32,12 @@ class TradeRequest(BaseModel):
     item_id: str
 
 
+class EquipmentRequest(BaseModel):
+    player_id: str
+    item_type: Literal["weapon", "armor"]
+    item_id: str | None = None
+
+
 class CraftRequest(BaseModel):
     player_id: str
     item1_type: Literal["weapon", "armor", "item", "material"]
@@ -66,6 +72,12 @@ class EventActionRequest(BaseModel):
     player_id: str
     event_id: str
     action_id: str
+    item_id: str | None = None
+
+
+class UseItemRequest(BaseModel):
+    player_id: str
+    item_id: str
 
 
 class RoomJoinRequest(BaseModel):

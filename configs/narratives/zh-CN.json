@@ -28,7 +28,8 @@
         "insufficient_mp": "魔力不足，无法使用该技能",
         "insufficient_stamina": "精力不足，无法使用该技能",
         "incapacitated": "当前生命状态无法进入新的战斗",
-        "item_unavailable": "没有可使用的战斗道具"
+        "item_unavailable": "没有可使用的战斗道具",
+        "equipment_required": "请先在角色页面装备武器与护甲"
       },
       "map": {
         "not_entered": "无效的探索状态",
@@ -60,6 +61,12 @@
         "keep_weapon": "必须保留至少一件武器",
         "keep_armor": "必须保留至少一件防具",
         "starter_armor": "平民布衣无法变现"
+        ,"not_tradable": "该物品不能通过常规商店交易"
+        ,"context_forbidden": "该物品不能在当前场景使用"
+        ,"no_effect": "当前状态下使用该物品不会产生效果"
+        ,"event_mismatch": "该物品的类别与能力无法解决当前事件"
+        ,"event_item_required": "请先选择一个可用于当前事件的物品"
+        ,"equipped": "正在装备的物品不能出售或消耗，请先卸下"
       },
       "shop": {
         "owned": "已经拥有该装备",
@@ -71,7 +78,8 @@
         "failed": "炼金流程执行失败",
         "same_equipment": "同名装备数量不足",
         "ingredient_forbidden": "该物品已是完整成品，不能继续作为合成原料",
-        "ancestor_forbidden": "合成产物不能与其任一级原材料再次合成"
+        "ancestor_forbidden": "合成产物不能与其任一级原材料再次合成",
+        "equipped": "正在装备的物品不能作为炼金原料，请先卸下"
       },
       "npc": {
         "not_found": "NPC 不存在",
