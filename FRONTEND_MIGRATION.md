@@ -89,8 +89,22 @@ export interface PlayerProfile {
   player_id: string;
   name: string;
   character_id: string;
+  race_id: string;
+  level: number;
+  experience: number;
+  experience_to_next: number;
+  total_experience: number;
+  attribute_points: number;
+  attributes: { vitality: number; strength: number; agility: number; wisdom: number; luck: number };
   gold: number;
   inventory: Inventory;
+  current_hp: number;
+  max_hp: number;
+  current_mp: number;
+  max_mp: number;
+  stamina: number;
+  max_stamina: number;
+  combat_statuses: CombatStatus[];
   current_map: MapInstance | null;
 }
 ```
@@ -166,6 +180,7 @@ export interface ResourceDefinition {
 }
 
 export interface GameMetaResponse {
+  races: Record<string, RaceDefinition>;
   characters: Record<string, CharacterDefinition>;
   weapons: Record<string, WeaponDefinition>;
   armors: Record<string, ArmorDefinition>;
@@ -185,7 +200,7 @@ Request:
 ```ts
 interface CreateCharacterRequest {
   name: string;          // 1..40 characters
-  character_id: string;  // key from meta.characters
+  race_id: string;  // key from meta.races; profession is not chosen at creation
 }
 ```
 
@@ -720,8 +735,14 @@ export interface CombatState {
   player_item_id: string | null;
   player_item_count: number;
   player_hp: number;
+  player_max_hp: number;
   player_mp: number;
+  player_max_mp: number;
+  player_stamina: number;
+  player_max_stamina: number;
   player_status: string;
+  player_statuses: CombatStatus[];
+  player_stats: DerivedCombatStats | null;
 
   ai_gold: number;
   ai_inventory: Inventory | Record<string, never>;
@@ -732,8 +753,14 @@ export interface CombatState {
   ai_item_id: string | null;
   ai_item_count: number;
   ai_hp: number;
+  ai_max_hp: number;
   ai_mp: number;
+  ai_max_mp: number;
+  ai_stamina: number;
+  ai_max_stamina: number;
   ai_status: string;
+  ai_statuses: CombatStatus[];
+  ai_stats: DerivedCombatStats | null;
 }
 
 export interface CombatSnapshot {
@@ -743,11 +770,14 @@ export interface CombatSnapshot {
   game_over: boolean;
   state: CombatState;
   combat_log: string;
+  last_resolution: RoundResolution | Record<string, never>;
   npc_enemy: (PublicNpc & { relationship: NpcRelationship }) | null;
 }
 ```
 
 Snapshot handling:
+
+`CombatStatus`, `DerivedCombatStats`, `DamageBreakdown`, and `RoundResolution` are defined in `llm-rpg-web/src/contracts/combat.ts`. The client displays these server-owned values and must not reproduce the damage formula.
 
 - `next_node === "PlayerPrep"`: show loadout selection.
 - `next_node === "PlayerAction"`: show action controls.
@@ -789,7 +819,7 @@ There are no stable machine-readable error codes yet. Do not branch business log
 
 ```text
 Load game meta
-    -> choose character
+    -> choose race and nation
     -> create profile
     -> retain player_id/profile
     -> enter hub

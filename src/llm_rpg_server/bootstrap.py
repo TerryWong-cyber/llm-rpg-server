@@ -16,7 +16,7 @@ from llm_rpg_server.exploration import ExplorationService
 from llm_rpg_server.monsters import MonsterCatalog
 from llm_rpg_server.npcs import InMemoryWorldRepository, NPCDialogueService, NPCInteractionService
 from llm_rpg_server.npcs.loader import seed_npcs
-from llm_rpg_server.players import EconomyService, InMemoryPlayerRepository, PlayerService
+from llm_rpg_server.players import EconomyService, GrowthService, InMemoryPlayerRepository, PlayerService
 from llm_rpg_server.shared.config import LocalContentProvider, Settings
 from llm_rpg_server.shared.llm import create_llm
 from llm_rpg_server.shared.observability import Observability
@@ -31,6 +31,7 @@ class AppContainer:
     catalog: Catalog
     players: InMemoryPlayerRepository
     player_service: PlayerService
+    growth: GrowthService
     economy: EconomyService
     world_repository: InMemoryWorldRepository
     npc_interactions: NPCInteractionService
@@ -53,12 +54,14 @@ def build_container() -> AppContainer:
     catalog = Catalog(content)
     players = InMemoryPlayerRepository()
     player_service = PlayerService(players, catalog, content)
+    growth = GrowthService(players, player_service, content)
     economy = EconomyService(players, catalog, content)
     llm = create_llm(settings)
     world_repository = InMemoryWorldRepository()
     seed_npcs(world_repository, content)
     npc_dialogue = NPCDialogueService(content, llm)
     npc_interactions = NPCInteractionService(world_repository, npc_dialogue, content)
+    npc_interactions.set_story_hook_listener(growth.start_quest)
     exploration = ExplorationService(players, catalog, content)
     monsters = MonsterCatalog(content, catalog)
     encounters = EncounterService(content, npc_interactions, clock=exploration.clock)
@@ -75,7 +78,15 @@ def build_container() -> AppContainer:
     )
     rooms = InMemoryRoomRepository()
     observability = Observability()
-    combat_engine = CombatEngine(catalog, players, player_service, content, llm)
+    combat_engine = CombatEngine(
+        catalog,
+        players,
+        player_service,
+        growth,
+        content,
+        llm,
+        world_clock=exploration.clock,
+    )
     combat = CombatSessionService(
         combat_engine,
         rooms,
@@ -84,6 +95,7 @@ def build_container() -> AppContainer:
         npc_interactions,
         content,
         observability,
+        growth,
         monsters,
     )
     world_events = WorldEventCoordinator(exploration, npc_interactions, monsters, combat)
@@ -94,6 +106,7 @@ def build_container() -> AppContainer:
         catalog=catalog,
         players=players,
         player_service=player_service,
+        growth=growth,
         economy=economy,
         world_repository=world_repository,
         npc_interactions=npc_interactions,
@@ -128,6 +141,22 @@ def validate_references(container: AppContainer) -> None:
             or (npc.combat.item_id is not None and npc.combat.item_id not in catalog.items)
         ):
             raise ValueError(f"NPC {npc.npc_id} has an invalid combat profile")
+        for hook in npc.story_hooks:
+            for requirement in hook.requirements:
+                if requirement.kind == "region" and requirement.region_id not in container.exploration.regions:
+                    raise ValueError(
+                        f"Quest {hook.hook_id} references unknown region {requirement.region_id}"
+                    )
+                if requirement.kind == "inventory":
+                    collection = (
+                        catalog.resources
+                        if requirement.item_type == "material"
+                        else catalog.items
+                    )
+                    if requirement.item_id not in collection:
+                        raise ValueError(
+                            f"Quest {hook.hook_id} references unknown item {requirement.item_id}"
+                        )
     npc_ids = {npc.npc_id for npc in container.world_repository.list_npcs()}
     for rule in container.encounters.rules:
         if rule.npc_id not in npc_ids:

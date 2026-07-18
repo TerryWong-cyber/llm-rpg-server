@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from llm_rpg_server.shared.config import ContentProvider
@@ -24,6 +25,13 @@ class NPCInteractionService:
         self.dialogue_service = dialogue_service
         self.content = content
         self.rules = content.document("npcs/interaction_rules.json")
+        self._story_hook_listener: Callable[[str, str, StoryHook], None] | None = None
+
+    def set_story_hook_listener(
+        self,
+        listener: Callable[[str, str, StoryHook], None],
+    ) -> None:
+        self._story_hook_listener = listener
 
     def public_npc(self, npc: NPCProfile) -> dict[str, Any]:
         return {
@@ -169,6 +177,22 @@ class NPCInteractionService:
                 tags=["story_hook", hook.hook_id, npc.npc_id, "world_event"],
                 facts={"npc_id": npc.npc_id, "hook_id": hook.hook_id, "source": source},
             )
+            if self._story_hook_listener:
+                self._story_hook_listener(player_id, npc_id, hook)
+        return hook
+
+    def complete_story_hook(self, npc_id: str, player_id: str, hook_id: str) -> StoryHook:
+        npc = self.repository.get_npc(npc_id)
+        hook = next((item for item in npc.story_hooks if item.hook_id == hook_id), None)
+        if hook is None:
+            raise ValueError(self.content.text("errors.npc.story_hook_unknown"))
+        relationship = self.repository.get_or_create_relationship(npc, player_id)
+        if hook_id not in relationship.active_story_hooks:
+            raise ValueError(self.content.text("errors.growth.quest_not_active"))
+        relationship.active_story_hooks.remove(hook_id)
+        if hook_id not in relationship.completed_story_hooks:
+            relationship.completed_story_hooks.append(hook_id)
+        self.repository.save_relationship(relationship)
         return hook
 
     def arm_event_combat(
@@ -271,6 +295,8 @@ class NPCInteractionService:
                 tags=["story_hook", hook.hook_id, npc.npc_id],
                 facts={"npc_id": npc.npc_id, "hook_id": hook.hook_id},
             )
+            if self._story_hook_listener:
+                self._story_hook_listener(relationship.player_id, npc.npc_id, hook)
         return hook
 
     def _available_hooks(

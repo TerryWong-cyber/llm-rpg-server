@@ -26,7 +26,9 @@
         "summary": "伊芙琳愿意托付你寻找被走私者带离森林的孢子培养盒。",
         "min_affinity": 8,
         "min_trust": 5,
-        "requires_memory_tags": []
+        "requires_memory_tags": [],
+        "xp_reward": 120,
+        "requirements": [{"kind": "inventory", "description": "带回 2 份发光蘑菇", "item_type": "material", "item_id": "mat_3", "quantity": 2, "consume": true}]
       }],
       "combat_triggers": []
     },
@@ -58,7 +60,9 @@
         "summary": "达洛克可能知道一份足以改变边境局势的货单下落。",
         "min_affinity": -10,
         "min_trust": -20,
-        "requires_memory_tags": []
+        "requires_memory_tags": [],
+        "xp_reward": 130,
+        "requirements": [{"kind": "inventory", "description": "取得 3 份赤砂盐晶作为货路证据", "item_type": "material", "item_id": "mat_12", "quantity": 3, "consume": true}]
       }],
       "combat_triggers": [{
         "trigger_id": "darok_defend_cargo",
@@ -96,7 +100,9 @@
         "summary": "玛琳正在寻找能重新点燃古炉的耐热材料与可靠帮手。",
         "min_affinity": 3,
         "min_trust": 0,
-        "requires_memory_tags": []
+        "requires_memory_tags": [],
+        "xp_reward": 150,
+        "requirements": [{"kind": "inventory", "description": "带回 2 枚余烬晶", "item_type": "material", "item_id": "mat_10", "quantity": 2, "consume": true}]
       }],
       "combat_triggers": []
     },
@@ -108,7 +114,7 @@
       "equipment": {"weapon_id": "6", "armor_id": "4", "items": {"5": 1}, "valuables": ["蓝焰守墓灯", "无名碑拓片"]},
       "combat": {"character_id": "6", "weapon_id": "6", "armor_id": "4", "item_id": "5", "item_count": 1, "threat": 6, "tactics": ["诅咒盗墓者", "生命汲取", "保护墓碑"], "arena": "沉月墓园的蓝灯石径"},
       "initial_disposition": {"affinity": 0, "trust": -4, "respect": 5, "hostility": 4},
-      "story_hooks": [{"hook_id": "seren_stolen_nameplates", "title": "失窃的姓名牌", "summary": "替瑟伦追回七块被盗姓名牌，并查明盗墓者为何只拿走这些墓碑。", "min_affinity": -10, "min_trust": -10, "requires_memory_tags": []}],
+      "story_hooks": [{"hook_id": "seren_stolen_nameplates", "title": "失窃的姓名牌", "summary": "替瑟伦追回七块被盗姓名牌，并查明盗墓者为何只拿走这些墓碑。", "min_affinity": -10, "min_trust": -10, "requires_memory_tags": [], "xp_reward": 180, "requirements": [{"kind": "inventory", "description": "找回 2 块铭文残石作为姓名牌线索", "item_type": "material", "item_id": "mat_38", "quantity": 2, "consume": true}]}],
       "combat_triggers": [{"trigger_id": "seren_defend_graves", "title": "守墓人的警告", "intro": "瑟伦横过蓝焰灯杖：‘再碰一次墓碑，我就把你的名字也刻在这里。’", "conditions": [{"kind": "message_contains", "field": null, "values": ["挖坟", "拿走遗物", "砸墓碑", "动手"], "threshold": null}], "repeatable": false}]
     },
     {
@@ -119,7 +125,7 @@
       "equipment": {"weapon_id": "5", "armor_id": "3", "items": {"1": 2, "4": 1}, "valuables": ["九域彩线地图", "商队铜印"]},
       "combat": {"character_id": "5", "weapon_id": "5", "armor_id": "3", "item_id": "1", "item_count": 2, "threat": 5, "tactics": ["保持距离", "风箭打断", "保护货车"], "arena": "琥珀草原的商队车阵"},
       "initial_disposition": {"affinity": 6, "trust": 0, "respect": 2, "hostility": 0},
-      "story_hooks": [{"hook_id": "tala_missing_caravans", "title": "消失的三支商队", "summary": "沿北方商路调查三支商队失踪现场，并寻找领主私兵留下的证据。", "min_affinity": 0, "min_trust": 0, "requires_memory_tags": []}],
+      "story_hooks": [{"hook_id": "tala_missing_caravans", "title": "消失的三支商队", "summary": "沿北方商路调查三支商队失踪现场，并寻找领主私兵留下的证据。", "min_affinity": 0, "min_trust": 0, "requires_memory_tags": [], "xp_reward": 160, "requirements": [{"kind": "inventory", "description": "取得 1 份琥珀树脂作为商队封蜡证据", "item_type": "material", "item_id": "mat_34", "quantity": 1, "consume": true}]}],
       "combat_triggers": [{"trigger_id": "tala_defend_caravan", "title": "车阵前的弓弦", "intro": "塔菈抬弓封住货车入口：‘商队不拒绝客人，但会埋掉强盗。’", "conditions": [{"kind": "message_contains", "field": null, "values": ["抢货", "打劫", "交出货物", "袭击"], "threshold": null}], "repeatable": false}]
     },
     {
@@ -130,7 +136,7 @@
       "equipment": {"weapon_id": "5", "armor_id": "5", "items": {"3": 1}, "valuables": ["碎裂灯塔透镜", "守潮骨哨"]},
       "combat": null,
       "initial_disposition": {"affinity": 3, "trust": -2, "respect": 1, "hostility": 0},
-      "story_hooks": [{"hook_id": "orin_broken_lens", "title": "破碎的灯塔之眼", "summary": "收集月白珍珠与纯净珊瑚，帮助奥林修复灯塔透镜。", "min_affinity": 0, "min_trust": -5, "requires_memory_tags": []}],
+      "story_hooks": [{"hook_id": "orin_broken_lens", "title": "破碎的灯塔之眼", "summary": "收集月白珍珠与纯净珊瑚，帮助奥林修复灯塔透镜。", "min_affinity": 0, "min_trust": -5, "requires_memory_tags": [], "xp_reward": 200, "requirements": [{"kind": "inventory", "description": "收集 1 枚月白珍珠", "item_type": "material", "item_id": "mat_27", "quantity": 1, "consume": true}, {"kind": "inventory", "description": "收集 2 份浅海珊瑚", "item_type": "material", "item_id": "mat_28", "quantity": 2, "consume": true}]}],
       "combat_triggers": []
     },
     {
@@ -141,7 +147,7 @@
       "equipment": {"weapon_id": "2", "armor_id": "3", "items": {"1": 1}, "valuables": ["王室封蜡信筒"]},
       "combat": {"character_id": "2", "weapon_id": "2", "armor_id": "3", "item_id": "1", "item_count": 1, "threat": 3, "tactics": ["闪避", "保护信筒", "寻找脱离路线"], "arena": "风雪覆盖的北境旧驿道"},
       "initial_disposition": {"affinity": 1, "trust": -8, "respect": 0, "hostility": 2},
-      "story_hooks": [{"hook_id": "maela_sealed_dispatch", "title": "必须送达的密信", "summary": "护送负伤的梅菈穿过霜骨亡兵出没的旧驿道。", "min_affinity": -5, "min_trust": -10, "requires_memory_tags": []}],
+      "story_hooks": [{"hook_id": "maela_sealed_dispatch", "title": "必须送达的密信", "summary": "护送负伤的梅菈穿过霜骨亡兵出没的旧驿道。", "min_affinity": -5, "min_trust": -10, "requires_memory_tags": [], "xp_reward": 170, "requirements": [{"kind": "region", "description": "抵达断脊山道", "region_id": "broken_spine"}]}],
       "combat_triggers": [{"trigger_id": "maela_protect_dispatch", "title": "信筒不可落手", "intro": "梅菈忍痛拔出短刃：‘我可以死，信不能给你。’", "conditions": [{"kind": "message_contains", "field": null, "values": ["交出信", "抢走信筒", "搜身", "动手"], "threshold": null}], "repeatable": false}]
     },
     {
@@ -152,7 +158,7 @@
       "equipment": {"weapon_id": "6", "armor_id": "1", "items": {"1": 1}, "valuables": ["刻名老橡木杖", "村库铁钥匙"]},
       "combat": null,
       "initial_disposition": {"affinity": 8, "trust": 3, "respect": 0, "hostility": 0},
-      "story_hooks": [{"hook_id": "hadrik_missing_shepherd", "title": "月夜失踪的牧童", "summary": "寻找失踪牧童留下的足迹，并判断狼群究竟在追猎还是保护他。", "min_affinity": 0, "min_trust": 0, "requires_memory_tags": []}],
+      "story_hooks": [{"hook_id": "hadrik_missing_shepherd", "title": "月夜失踪的牧童", "summary": "寻找失踪牧童留下的足迹，并判断狼群究竟在追猎还是保护他。", "min_affinity": 0, "min_trust": 0, "requires_memory_tags": [], "xp_reward": 140, "requirements": [{"kind": "inventory", "description": "带回 2 份兽皮作为追踪线索", "item_type": "material", "item_id": "mat_16", "quantity": 2, "consume": true}]}],
       "combat_triggers": []
     }
   ]

@@ -2,12 +2,23 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictInt
 
 
 class CreateCharacterRequest(BaseModel):
     name: str = Field(min_length=1, max_length=40)
-    character_id: str
+    race_id: str
+
+
+class AttributeAllocationRequest(BaseModel):
+    player_id: str
+    allocations: dict[str, StrictInt]
+
+
+class QuestCompleteRequest(BaseModel):
+    player_id: str
+    npc_id: str
+    hook_id: str
 
 
 class PlayerRequest(BaseModel):

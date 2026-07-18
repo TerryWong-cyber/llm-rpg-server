@@ -89,7 +89,6 @@ def gather(request: CellRequest, container: Container):
         tags=["exploration", "gather", f"terrain:{cell.terrain_id}"],
         importance=2 if loot else 1,
     )
-    profile = container.players.get(request.player_id)
     response = _map_response(container, request.player_id, current, encounter)
     response.update({
         "status": "success",
@@ -115,6 +114,16 @@ def eat(request: EatRequest, container: Container):
 @router.post("/camp")
 def camp(request: PlayerRequest, container: Container):
     profile = container.exploration.camp(request.player_id)
+    current = MapInstance.model_validate(profile.current_map)
+    response = _map_response(container, request.player_id, current, None)
+    response["status"] = "success"
+    response["profile"] = profile.model_dump(mode="json")
+    return response
+
+
+@router.post("/inn")
+def rest_at_inn(request: PlayerRequest, container: Container):
+    profile = container.exploration.rest_at_inn(request.player_id)
     current = MapInstance.model_validate(profile.current_map)
     response = _map_response(container, request.player_id, current, None)
     response["status"] = "success"
@@ -168,10 +177,21 @@ def _map_response(
         "resources_meta": container.catalog.resources,
         "inventory_materials": profile.inventory.materials,
         "player": {
+            "current_hp": profile.current_hp,
+            "max_hp": profile.max_hp,
+            "current_mp": profile.current_mp,
+            "max_mp": profile.max_mp,
             "stamina": profile.stamina,
             "max_stamina": profile.max_stamina,
+            "combat_statuses": [item.model_dump(mode="json") for item in profile.combat_statuses],
             "inventory_items": profile.inventory.items,
             "last_camped_game_day": profile.last_camped_game_day,
+            "progression": container.growth.public_progress(profile),
+            "active_quests": {
+                key: value.model_dump(mode="json")
+                for key, value in profile.active_quests.items()
+            },
+            "completed_quests": list(profile.completed_quests),
         },
         "world": container.exploration.world_overview(),
         "world_time": container.exploration.time_snapshot().model_dump(mode="json"),

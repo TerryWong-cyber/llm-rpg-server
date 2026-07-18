@@ -36,7 +36,9 @@ def get_npc(npc_id: str, container: Container, player_id: str | None = None):
 @router.post("/npcs/{npc_id}/dialogue")
 def dialogue(npc_id: str, request: NPCDialogueRequest, container: Container):
     container.players.get(request.player_id)
-    return container.npc_interactions.interact(npc_id, request.player_id, request.message)
+    response = container.npc_interactions.interact(npc_id, request.player_id, request.message)
+    response["profile"] = container.players.get(request.player_id).model_dump(mode="json")
+    return response
 
 
 @router.get("/npcs/{npc_id}/memories")
@@ -68,9 +70,7 @@ def get_monster(monster_id: str, container: Container):
 
 @router.post("/npcs/{npc_id}/combat/start")
 def start_npc_combat(npc_id: str, request: NPCCombatStartRequest, container: Container):
-    container.exploration.require_stamina(request.player_id, "combat")
     room = container.combat.start_npc_combat(request.player_id, npc_id, request.trigger_id)
-    container.exploration.spend_stamina(request.player_id, "combat")
     return {
         "status": "success",
         "room_id": room.room_id,

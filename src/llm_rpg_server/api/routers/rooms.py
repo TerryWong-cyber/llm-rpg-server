@@ -15,17 +15,13 @@ Container = Annotated[AppContainer, Depends(container_from_request)]
 
 @router.post("/create")
 def create_room(request: PlayerRequest, container: Container):
-    container.exploration.require_stamina(request.player_id, "combat")
     room = container.combat.create_room(request.player_id)
-    container.exploration.spend_stamina(request.player_id, "combat")
     return {"room_id": room.room_id}
 
 
 @router.post("/join")
 def join_room(request: RoomJoinRequest, container: Container):
-    container.exploration.require_stamina(request.player_id, "combat")
     room = container.combat.join_room(request.room_id, request.player_id)
-    container.exploration.spend_stamina(request.player_id, "combat")
     return {"room_id": room.room_id, "mode": room.mode}
 
 

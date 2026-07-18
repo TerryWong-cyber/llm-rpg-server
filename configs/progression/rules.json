@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "level_curve": {
+    "base_experience": 100,
+    "exponent": 1.35,
+    "attribute_points_per_level": 5,
+    "maximum_level": 100
+  },
+  "base_resources": {
+    "hp": 38,
+    "mp": 18
+  },
+  "experience_rewards": {
+    "random_pve": 45,
+    "pvp_victory": 30,
+    "npc_base": 35,
+    "monster_base": 30,
+    "per_threat": 12
+  },
+  "allocatable_attributes": ["vitality", "strength", "agility", "wisdom", "luck"]
+}

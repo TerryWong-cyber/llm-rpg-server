@@ -5,6 +5,7 @@ import pytest
 from llm_rpg_server.exploration import ExplorationService
 from llm_rpg_server.exploration.models import MapInstance
 from llm_rpg_server.players import InMemoryPlayerRepository, PlayerService
+from llm_rpg_server.players.models import PersistentCombatStatus
 from llm_rpg_server.world import WorldClock
 
 
@@ -125,10 +126,38 @@ def test_camp_restores_stamina_once_per_game_day(content, catalog):
     set_current_terrain(players, player.player_id, "4")
     with players.transaction(player.player_id) as profile:
         profile.stamina = 20
+        profile.current_hp = 10
+        profile.current_mp = 5
     rested = service.camp(player.player_id)
     assert rested.stamina == 80
+    assert rested.current_hp > 10
+    assert rested.current_mp > 5
     with pytest.raises(ValueError, match="已经充分休息"):
         service.camp(player.player_id)
+
+
+def test_inn_fully_restores_global_resources_and_clears_statuses(content, catalog):
+    players, player, service = create_service(content, catalog)
+    service.enter(player.player_id, seed=9)
+    set_current_terrain(players, player.player_id, "9")
+    with players.transaction(player.player_id) as profile:
+        profile.current_hp = 1
+        profile.current_mp = 0
+        profile.stamina = 0
+        profile.combat_statuses = [PersistentCombatStatus(
+            status_id="weakness",
+            name="虚弱",
+            source_id="defeat",
+            remaining_turns=3,
+            tags=["negative"],
+        )]
+
+    rested = service.rest_at_inn(player.player_id)
+
+    assert rested.current_hp == rested.max_hp
+    assert rested.current_mp == rested.max_mp
+    assert rested.stamina == rested.max_stamina
+    assert rested.combat_statuses == []
 
 
 def test_world_clock_starts_at_year_zero_and_matches_time_conditions(content, catalog):

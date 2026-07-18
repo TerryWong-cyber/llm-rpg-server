@@ -73,6 +73,18 @@ class StoryHook(BaseModel):
     min_affinity: int = -100
     min_trust: int = -100
     requires_memory_tags: list[str] = Field(default_factory=list)
+    xp_reward: int = Field(default=100, ge=0)
+    requirements: list[QuestRequirement] = Field(default_factory=list)
+
+
+class QuestRequirement(BaseModel):
+    kind: Literal["inventory", "region"]
+    description: str
+    item_type: Literal["item", "material"] | None = None
+    item_id: str | None = None
+    quantity: int = Field(default=1, ge=1)
+    consume: bool = False
+    region_id: str | None = None
 
 
 class NPCProfile(BaseModel):
@@ -103,6 +115,7 @@ class NPCRelationship(BaseModel):
     hostility: int = 0
     flags: list[str] = Field(default_factory=list)
     active_story_hooks: list[str] = Field(default_factory=list)
+    completed_story_hooks: list[str] = Field(default_factory=list)
     armed_combat_triggers: list[str] = Field(default_factory=list)
     consumed_combat_triggers: list[str] = Field(default_factory=list)
     interaction_count: int = 0

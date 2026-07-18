@@ -47,14 +47,60 @@ class WorldEventLogEntry(BaseModel):
     season: str
 
 
+class PersistentCombatStatus(BaseModel):
+    status_id: str
+    name: str
+    source_id: str = "environment"
+    stacks: int = Field(default=1, ge=1)
+    potency: float = Field(default=1, ge=0)
+    remaining_turns: int = Field(default=1, ge=0)
+    persistent: bool = True
+    tags: list[str] = Field(default_factory=list)
+
+
+class CharacterAttributes(BaseModel):
+    vitality: int = Field(default=5, ge=1)
+    strength: int = Field(default=5, ge=1)
+    agility: int = Field(default=5, ge=1)
+    wisdom: int = Field(default=5, ge=1)
+    luck: int = Field(default=5, ge=1)
+
+
+class QuestProgress(BaseModel):
+    hook_id: str
+    npc_id: str
+    title: str
+    summary: str
+    xp_reward: int = Field(ge=0)
+    requirements: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class PlayerProfile(BaseModel):
     player_id: str
     name: str
     character_id: str
+    race_id: str = "1"
+    level: int = Field(default=1, ge=1)
+    experience: int = Field(default=0, ge=0)
+    experience_to_next: int = Field(default=100, gt=0)
+    total_experience: int = Field(default=0, ge=0)
+    attribute_points: int = Field(default=0, ge=0)
+    attributes: CharacterAttributes = Field(default_factory=CharacterAttributes)
+    active_quests: dict[str, QuestProgress] = Field(default_factory=dict)
+    completed_quests: list[str] = Field(default_factory=list)
     gold: int = Field(ge=0)
     inventory: Inventory
+    current_hp: int = Field(default=1, ge=0)
+    max_hp: int = Field(default=1, gt=0)
+    current_mp: int = Field(default=0, ge=0)
+    max_mp: int = Field(default=0, ge=0)
     stamina: int = Field(default=100, ge=0)
     max_stamina: int = Field(default=100, gt=0)
+    combat_statuses: list[PersistentCombatStatus] = Field(default_factory=list)
+    psychological_traits: list[str] = Field(default_factory=list)
+    equipped_weapon_id: str | None = None
+    equipped_armor_id: str | None = None
+    equipped_item_id: str | None = None
     world_seed: int | None = None
     current_map: dict[str, Any] | None = None
     world_maps: dict[str, dict[str, Any]] = Field(default_factory=dict)

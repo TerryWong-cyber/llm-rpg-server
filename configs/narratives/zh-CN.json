@@ -9,7 +9,15 @@
     "errors": {
       "resource_not_found": "请求的资源不存在",
       "player": {"not_found": "未找到角色档案"},
-      "character": {"invalid": "选定的基础职业不存在"},
+      "character": {"invalid": "选定的种族或出生国度不存在"},
+      "growth": {
+        "invalid_allocation": "属性加点包含不可分配的字段或数值",
+        "empty_allocation": "请至少分配一个属性点",
+        "insufficient_points": "可用属性点不足",
+        "quest_not_active": "该任务尚未接取或不属于这名委托人",
+        "quest_requirements": "任务目标尚未全部完成",
+        "quest_completed": "该任务奖励已经结算"
+      },
       "room": {
         "not_found": "决斗房间无效或已解散",
         "full": "该房间已满员或已开战",
@@ -18,6 +26,8 @@
         "disconnected": "对手已断开连接，决斗房间已解散",
         "invalid_action": "无效的战斗动作",
         "insufficient_mp": "魔力不足，无法使用该技能",
+        "insufficient_stamina": "精力不足，无法使用该技能",
+        "incapacitated": "当前生命状态无法进入新的战斗",
         "item_unavailable": "没有可使用的战斗道具"
       },
       "map": {
@@ -36,6 +46,7 @@
         "not_food": "该物品不能用于恢复探索精力",
         "cannot_camp": "此处不适合扎营休息",
         "camp_cooldown": "今天已经充分休息过了，等到下一个游戏日再扎营",
+        "inn_unavailable": "只有村庄或城镇的旅店才能提供完整休整",
         "event_unknown": "这个世界事件不存在",
         "event_not_active": "当前地块没有可继续处理的这个事件",
         "event_action_invalid": "这个事件不支持所选行动"
@@ -95,14 +106,16 @@
         "skill": "技能：{skill_name}"
       },
       "fallback_narration": "双方激烈交锋，战场烟尘四起，战局退回常规拉锯战。",
-      "round_log": "⚙️ 第 {turn} 回合推演 ⚙️\n📖 战报：{narration}\n⚔️ {player_name}判定：效果 {player_score}/10 | 伤害 {player_damage} | 状态：{player_status}\n⚔️ {opponent_name}判定：效果 {opponent_score}/10 | 伤害 {opponent_damage} | 状态：{opponent_status}\n----------------------------------------\n❤️ [{player_name}] HP {player_hp} | MP {player_mp}\n💀 [{opponent_name}] HP {opponent_hp} | MP {opponent_mp}",
+      "round_log": "⚙️ 第 {turn} 回合推演 ⚙️\n📖 战报：{narration}\n⚔️ {player_name}：效果 {player_score}/10 | {player_reason} | 直伤 {player_damage} | 状态：{player_status}\n⚔️ {opponent_name}：效果 {opponent_score}/10 | {opponent_reason} | 直伤 {opponent_damage} | 状态：{opponent_status}\n----------------------------------------\n❤️ [{player_name}] HP {player_hp} | MP {player_mp} | 精力 {player_stamina}\n💀 [{opponent_name}] HP {opponent_hp} | MP {opponent_mp} | 精力 {opponent_stamina}",
       "settlement": {
         "draw": "=== 📊 最终结算 ===\n💀 惨烈对决，同归于尽！",
         "defeat": "=== 📊 最终结算 ===\n❌ 战败。{winner}赢得了胜利。",
         "victory": "=== 📊 最终结算 ===\n🏆 获得胜利！",
-        "pvp": "\n⚔️ PvP 联机决斗已结束，荣誉即是最高奖赏。",
-        "reward": "\n💰 斩获战利金：+{gold} 金币！\n🎁 额外获得：{loot}",
-        "monster_reward": "💰 野怪战利品：{gold} 金币；{loot}",
+        "pvp": "\n⚔️ PvP 联机决斗已结束。",
+        "reward": "\n💰 斩获战利金：+{gold} 金币！\n🎁 额外获得：{loot}\n✦ 获得经验：+{experience}",
+        "experience": "✦ 获得经验：+{experience}{level_up}",
+        "level_up": "，提升至 {level} 级并获得新的属性点",
+        "monster_reward": "💰 野怪战利品：{gold} 金币；{loot}\n✦ 获得经验：+{experience}{level_up}",
         "monster_drop_item": "{name} ×{quantity}",
         "monster_no_drop": "没有发现额外素材",
         "weapon_loot": "全新武器【{name}】",

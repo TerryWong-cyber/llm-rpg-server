@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "attributes": {
+    "hp_per_strength": 2.0,
+    "hp_per_vitality": 7.0,
+    "mp_per_wisdom": 2.0,
+    "base_stamina": 80,
+    "stamina_per_strength": 1.0,
+    "stamina_per_agility": 2.0,
+    "physical_power_per_strength": 1.5,
+    "spell_power_per_wisdom": 1.5,
+    "base_accuracy": 70,
+    "accuracy_per_agility": 2.0,
+    "accuracy_per_luck": 0.5,
+    "evasion_per_agility": 1.5,
+    "base_critical_chance": 0.05,
+    "critical_chance_per_luck": 0.01,
+    "critical_chance_per_agility": 0.002,
+    "critical_chance_cap": 0.35,
+    "critical_multiplier": 1.5,
+    "physical_resistance_per_strength": 0.8,
+    "magic_resistance_per_wisdom": 0.8,
+    "status_resistance_per_wisdom": 1.2,
+    "status_resistance_per_luck": 1.0,
+    "status_resistance_per_vitality": 0.8
+  },
+  "damage": {
+    "min_hit_chance": 0.05,
+    "max_hit_chance": 0.95
+  },
+  "status_aliases": {
+    "中毒": "poison",
+    "灼烧": "burn",
+    "烧伤": "burn",
+    "冻伤": "frostbite",
+    "冻结": "frostbite",
+    "虚弱": "weakness",
+    "恐惧": "fear",
+    "昏迷": "stun",
+    "眩晕": "stun",
+    "禁锢": "root"
+  },
+  "statuses": {
+    "poison": {"name": "中毒", "base_chance": 0.75, "duration": 4, "potency": 1, "max_stacks": 3, "persistent": true, "tags": ["negative", "damage_over_time"], "tick_damage": {"kind": "elemental", "element": "poison", "amount": 4}, "environment_chance": {"toxic": 1.3, "wet": 1.1}},
+    "burn": {"name": "灼烧", "base_chance": 0.7, "duration": 3, "potency": 1, "max_stacks": 3, "persistent": true, "tags": ["negative", "damage_over_time"], "tick_damage": {"kind": "elemental", "element": "fire", "amount": 5}, "environment_chance": {"hot": 1.35, "wet": 0.55}},
+    "frostbite": {"name": "冻伤", "base_chance": 0.65, "duration": 3, "potency": 1, "max_stacks": 2, "persistent": true, "tags": ["negative", "damage_over_time"], "tick_damage": {"kind": "elemental", "element": "ice", "amount": 3}, "attribute_multipliers": {"agility": 0.8}, "environment_chance": {"cold": 1.35, "hot": 0.55}},
+    "weakness": {"name": "虚弱", "base_chance": 0.8, "duration": 4, "potency": 1, "max_stacks": 1, "persistent": true, "tags": ["negative"], "attribute_multipliers": {"strength": 0.75, "wisdom": 0.75}},
+    "fear": {"name": "恐惧", "base_chance": 0.65, "duration": 2, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["negative", "mental"], "attribute_multipliers": {"agility": 0.75, "luck": 0.7}},
+    "stun": {"name": "昏迷", "base_chance": 0.5, "duration": 1, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["negative", "incapacitating"]},
+    "root": {"name": "禁锢", "base_chance": 0.65, "duration": 2, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["negative", "movement_lock"], "attribute_multipliers": {"agility": 0.45}}
+  },
+  "environment": {
+    "fall": {"min_mass_kg": 1, "max_mass_kg": 1000, "max_height_m": 500, "energy_scale": 0.34},
+    "drowning": {"grace_turns": 2, "base_max_hp_ratio": 0.08, "growth_per_turn": 0.06, "max_hp_ratio_cap": 0.35},
+    "profiles": [
+      {"keywords": ["熔岩", "火山", "灼热", "灰烬"], "tags": ["hot", "fire"], "hazards": [{"id": "ambient_heat", "kind": "high_temperature", "severity": 1.0}]},
+      {"keywords": ["毒气", "瘴气", "腐败沼泽"], "tags": ["toxic", "wet"], "hazards": [{"id": "toxic_air", "kind": "toxic_gas", "severity": 1.0}]},
+      {"keywords": ["深水", "水下", "沉没"], "tags": ["water", "wet"], "hazards": [{"id": "submersion", "kind": "drowning", "severity": 1.0, "grace_turns": 2}]},
+      {"keywords": ["冻土", "雪原", "冰窟", "霜"], "tags": ["cold", "ice"], "hazards": []}
+    ]
+  }
+}

@@ -106,10 +106,14 @@ class ExplorationService:
         refresh: bool = False,
         seed: int | None = None,
     ) -> tuple[MapInstance, EncounterResult | None]:
-        chosen_template = template_id or self.default_template_id
-        if chosen_template not in self.templates:
-            raise ValueError(self.content.text("errors.map.invalid_template"))
         with self.players.transaction(player_id) as profile:
+            existing = MapInstance.model_validate(profile.current_map) if profile.current_map else None
+            birthplace = self.catalog.races[profile.race_id]["birthplace"]
+            chosen_template = template_id or (
+                existing.template_id if existing is not None and not refresh else birthplace["template_id"]
+            )
+            if chosen_template not in self.templates:
+                raise ValueError(self.content.text("errors.map.invalid_template"))
             template = self.templates[chosen_template]
             if seed is not None:
                 profile.world_seed = seed
@@ -117,9 +121,11 @@ class ExplorationService:
                     profile.world_maps.clear()
             elif profile.world_seed is None:
                 profile.world_seed = random.SystemRandom().randint(0, 2**31 - 1)
-            current = MapInstance.model_validate(profile.current_map) if profile.current_map else None
+            current = existing
             if current is None or refresh or current.template_id != chosen_template:
                 current = self._generate(template, self._region_seed(profile.world_seed, template))
+                if chosen_template == birthplace["template_id"]:
+                    self._place_at_birthplace(current, birthplace)
             else:
                 self._hydrate_cells(current)
             current.cells[current.current_cell_id].explored = True
@@ -263,13 +269,38 @@ class ExplorationService:
             game_day = now.total_game_hours // 24
             if profile.last_camped_game_day == game_day:
                 raise ValueError(self.content.text("errors.map.camp_cooldown"))
-            if profile.stamina >= profile.max_stamina:
+            if (
+                profile.stamina >= profile.max_stamina
+                and profile.current_hp >= profile.max_hp
+                and profile.current_mp >= profile.max_mp
+            ):
                 raise ValueError(self.content.text("errors.map.stamina_full"))
             profile.stamina = min(
                 profile.max_stamina,
                 profile.stamina + int(self.action_rules.get("camp_restore", 60)),
             )
+            profile.current_hp = min(
+                profile.max_hp,
+                profile.current_hp + max(1, round(profile.max_hp * float(self.action_rules.get("camp_hp_ratio", 0.4)))),
+            )
+            profile.current_mp = min(
+                profile.max_mp,
+                profile.current_mp + max(1, round(profile.max_mp * float(self.action_rules.get("camp_mp_ratio", 0.4)))),
+            )
             profile.last_camped_game_day = game_day
+        return self.players.get(player_id)
+
+    def rest_at_inn(self, player_id: str) -> PlayerProfile:
+        with self.players.transaction(player_id) as profile:
+            current = self._current(profile)
+            cell = current.cells[current.current_cell_id]
+            terrain = self.terrains.get(cell.terrain_id, {})
+            if "inn" not in terrain.get("interactions", []):
+                raise ValueError(self.content.text("errors.map.inn_unavailable"))
+            profile.current_hp = profile.max_hp
+            profile.current_mp = profile.max_mp
+            profile.stamina = profile.max_stamina
+            profile.combat_statuses = []
         return self.players.get(player_id)
 
     def actions(self, player_id: str) -> dict[str, ActionAvailability]:
@@ -289,6 +320,7 @@ class ExplorationService:
         shop_open, shop_reason = self.can_trade(player_id, profile=profile, now=now)
         camp_day = now.total_game_hours // 24
         can_camp = cell.campable and profile.last_camped_game_day != camp_day
+        can_use_inn = "inn" in terrain.get("interactions", [])
         camp_reason = ""
         if not cell.campable:
             camp_reason = self.content.text("errors.map.cannot_camp")
@@ -304,10 +336,23 @@ class ExplorationService:
                 cost=gather_cost,
             ),
             "camp": ActionAvailability(
-                available=can_camp and profile.stamina < profile.max_stamina,
+                available=can_camp and (
+                    profile.stamina < profile.max_stamina
+                    or profile.current_hp < profile.max_hp
+                    or profile.current_mp < profile.max_mp
+                ),
                 reason=camp_reason,
             ),
             "shop": ActionAvailability(available=shop_open, reason=shop_reason),
+            "inn": ActionAvailability(
+                available=can_use_inn and (
+                    profile.current_hp < profile.max_hp
+                    or profile.current_mp < profile.max_mp
+                    or profile.stamina < profile.max_stamina
+                    or bool(profile.combat_statuses)
+                ),
+                reason="" if can_use_inn else self.content.text("errors.map.inn_unavailable"),
+            ),
             "eat": ActionAvailability(
                 available=any(
                     quantity > 0 and int(self.catalog.items.get(item_id, {}).get("stamina_restore", 0)) > 0
@@ -405,6 +450,26 @@ class ExplorationService:
             current_cell_id=start.cell_id,
             cells=cells,
         )
+
+    def _place_at_birthplace(
+        self,
+        current: MapInstance,
+        birthplace: dict[str, Any],
+    ) -> None:
+        cell_id = int(birthplace["cell_id"])
+        if cell_id < 0 or cell_id >= len(current.cells):
+            raise ValueError(f"Race birthplace cell is outside map: {cell_id}")
+        cell = current.cells[cell_id]
+        terrain = self.terrains.get(cell.terrain_id, {})
+        interactions = set(terrain.get("interactions", []))
+        if not {"shop", "inn"}.issubset(interactions):
+            raise ValueError(
+                f"Race birthplace {birthplace['settlement_name']} must provide shop and inn"
+            )
+        for map_cell in current.cells:
+            map_cell.explored = False
+        current.current_cell_id = cell_id
+        cell.explored = True
 
     def _clustered_layout(self, template: MapTemplate, rng: random.Random) -> dict[int, str]:
         assert template.width is not None and template.height is not None
@@ -992,6 +1057,17 @@ class ExplorationService:
                     raise ValueError(
                         f"Terrain {terrain_id} gather rule references unknown regions: {sorted(unknown_regions)}"
                     )
+        for race_id, race in self.catalog.races.items():
+            birthplace = race["birthplace"]
+            template = self.templates.get(birthplace["template_id"])
+            if (
+                template is None
+                or template.region_id != birthplace["region_id"]
+                or template.world_id != birthplace["world_id"]
+                or int(birthplace["cell_id"]) not in template.landmarks
+                or template.landmark_terrains.get(int(birthplace["cell_id"])) not in {"9", "10"}
+            ):
+                raise ValueError(f"Race {race_id} has an invalid configured birthplace")
         event_ids: set[str] = set()
         for rule in self.event_rules:
             event_id = rule.get("event_id")

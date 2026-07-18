@@ -5,7 +5,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from llm_rpg_server.api.dependencies import container_from_request
-from llm_rpg_server.api.schemas import CraftRequest, CreateCharacterRequest, TradeRequest
+from llm_rpg_server.api.schemas import (
+    AttributeAllocationRequest,
+    CraftRequest,
+    CreateCharacterRequest,
+    QuestCompleteRequest,
+    TradeRequest,
+)
 from llm_rpg_server.bootstrap import AppContainer
 from llm_rpg_server.crafting import ItemReference
 
@@ -20,8 +26,42 @@ def game_meta(container: Container):
 
 @router.post("/character/create")
 def create_character(request: CreateCharacterRequest, container: Container):
-    profile = container.player_service.create(request.name, request.character_id)
+    profile = container.player_service.create(request.name, request.race_id)
     return {"status": "success", "player_id": profile.player_id, "profile": profile.model_dump(mode="json")}
+
+
+@router.post("/character/allocate")
+def allocate_attributes(request: AttributeAllocationRequest, container: Container):
+    profile = container.growth.allocate(request.player_id, request.allocations)
+    return {
+        "status": "success",
+        "profile": profile.model_dump(mode="json"),
+        "progression": container.growth.public_progress(profile),
+    }
+
+
+@router.post("/quest/complete")
+def complete_quest(request: QuestCompleteRequest, container: Container):
+    npc = container.world_repository.get_npc(request.npc_id)
+    hook = next((item for item in npc.story_hooks if item.hook_id == request.hook_id), None)
+    if hook is None:
+        raise ValueError(container.content.text("errors.npc.story_hook_unknown"))
+    reward = container.growth.complete_quest(
+        request.player_id,
+        request.npc_id,
+        request.hook_id,
+    )
+    container.npc_interactions.complete_story_hook(
+        request.npc_id,
+        request.player_id,
+        request.hook_id,
+    )
+    profile = container.players.get(request.player_id)
+    return {
+        "status": "success",
+        "profile": profile.model_dump(mode="json"),
+        "reward": reward,
+    }
 
 
 @router.post("/shop/buy")

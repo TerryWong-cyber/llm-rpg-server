@@ -13,7 +13,7 @@ src/llm_rpg_server/
 ├── exploration/    Regional maps, movement, stamina, gathering, and world travel
 ├── monsters/       Lightweight configured enemies, equipment, tactics, and drops
 ├── npcs/           NPC profiles, dialogue, relationships, and memory
-├── players/        Player profiles, inventory, economy, and repositories
+├── players/        Player profiles, race growth, quests, economy, and repositories
 ├── shared/         Content, settings, LLM, and observability adapters
 └── world/          Cross-domain encounter orchestration
 ```
@@ -34,7 +34,9 @@ The legacy command `uvicorn server:app_api --reload` remains available through t
 
 ## Content
 
-- `configs/catalog/`: characters, equipment, items, resources, and game rules
+- `configs/catalog/`: races, internal combat archetypes, equipment, items, resources, and game rules
+- `configs/progression/`: level curve, attribute points, base resources, and experience rewards
+- `configs/combat/`: attributes, damage, statuses, and environment hazards
 - `configs/prompts/`: versioned LLM prompts
 - `configs/narratives/`: localized player-facing text
 - `configs/npcs/`: NPC profiles and interaction rules
@@ -55,8 +57,12 @@ Generated materials and consumables use a stable ID derived from the unordered r
 
 The default world is a 3 × 3 grid of nine countries/regions. Every region is a deterministic 16 × 16 map whose exact terrain counts are configured in `configs/maps/world.json`. Crossing a regional edge through `POST /api/map/move-direction` enters the adjacent country from the opposite edge; visited regional maps remain in the player world state.
 
-Use `GET /api/map/templates` to discover regions and `GET /api/map/time` to read the global clock. `POST /api/map/enter` accepts `player_id`, optional `template_id`, `refresh`, and optional deterministic `seed`. Existing click movement remains available through `POST /api/map/move`; gathering, eating, and camping use `/api/map/gather`, `/api/map/eat`, and `/api/map/camp`.
+Use `GET /api/map/templates` to discover regions and `GET /api/map/time` to read the global clock. `POST /api/map/enter` accepts `player_id`, optional `template_id`, `refresh`, and optional deterministic `seed`. Existing click movement remains available through `POST /api/map/move`; gathering, eating, camping, and full inn recovery use `/api/map/gather`, `/api/map/eat`, `/api/map/camp`, and `/api/map/inn`.
 
 NPC placement is defined independently in `configs/maps/encounters.json`. An encounter can target regions, map templates, terrain, landmarks, or cell IDs and can apply relationship, memory, time, or season conditions, probability, priority, cooldown, and repeatability. Settlement terrain multiplies NPC encounter probability. Map movement returns the resolved encounter without coupling exploration to dialogue or combat implementations.
 
 See [WORLD_SYSTEM.md](WORLD_SYSTEM.md) for time, terrain, event, stamina, and extension contracts.
+
+See [COMBAT_SYSTEM.md](COMBAT_SYSTEM.md) for the damage formula, LLM boundary, status lifecycle, environment functions, global resources, and extension points.
+
+See [GROWTH_SYSTEM.md](GROWTH_SYSTEM.md) for race backgrounds and passives, level/experience rules, five-attribute allocation, quest experience, and configured birth towns.

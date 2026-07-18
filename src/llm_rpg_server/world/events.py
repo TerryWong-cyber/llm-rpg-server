@@ -72,7 +72,6 @@ class WorldEventCoordinator:
                 "story_hook": hook.model_dump(mode="json"),
             })
         elif kind == "npc_combat":
-            self.exploration.require_stamina(player_id, "combat")
             self.npcs.arm_event_combat(
                 action["target_id"],
                 player_id,
@@ -84,16 +83,13 @@ class WorldEventCoordinator:
                 action["target_id"],
                 action["trigger_id"],
             )
-            self.exploration.spend_stamina(player_id, "combat")
             interaction["npc_id"] = action["target_id"]
         elif kind == "monster_combat":
-            self.exploration.require_stamina(player_id, "combat")
             room = self.combat.start_monster_combat(
                 player_id,
                 action["target_id"],
                 event_id,
             )
-            self.exploration.spend_stamina(player_id, "combat")
             interaction["monster_id"] = action["target_id"]
 
         current, event = self.exploration.event_action(player_id, event_id, action_id)

@@ -9,6 +9,9 @@
       "str": 9,
       "agi": 4,
       "int": 3,
+      "wis": 3,
+      "luck": 4,
+      "traits": ["坚守阵地", "重甲训练", "不擅长追击飞行目标"],
       "desc": "血厚防高，精通近战物理压制。",
       "image_url": "/assets/vendor/game-icons/delapouite/barbarian.svg"
     },
@@ -20,6 +23,9 @@
       "str": 6,
       "agi": 10,
       "int": 5,
+      "wis": 5,
+      "luck": 8,
+      "traits": ["擅长伏击", "童年曾被猎犬围困，惧怕犬科动物与包围", "熟悉毒素"],
       "desc": "身板脆弱，极高闪避与暴击率。",
       "image_url": "/assets/vendor/game-icons/delapouite/pirate-captain.svg"
     },
@@ -31,6 +37,9 @@
       "str": 2,
       "agi": 6,
       "int": 10,
+      "wis": 10,
+      "luck": 6,
+      "traits": ["精通元素学", "近身受压时容易慌乱", "善于利用地形"],
       "desc": "以庞大蓝量驱动高额魔法爆发。",
       "image_url": "/assets/vendor/game-icons/delapouite/wizard-face.svg"
     },
@@ -42,6 +51,9 @@
       "str": 7,
       "agi": 4,
       "int": 6,
+      "wis": 7,
+      "luck": 5,
+      "traits": ["保护弱者", "面对亡灵意志坚定", "行动偏保守"],
       "desc": "半坦半奶，攻守兼备。",
       "image_url": "/assets/vendor/game-icons/delapouite/cleopatra.svg"
     },
@@ -53,6 +65,9 @@
       "str": 5,
       "agi": 9,
       "int": 4,
+      "wis": 5,
+      "luck": 7,
+      "traits": ["熟悉野外", "擅长攻击高处目标", "狭窄空间发挥受限"],
       "desc": "游侠，行动敏捷，打断对手节奏。",
       "image_url": "/assets/vendor/game-icons/delapouite/woman-elf-face.svg"
     },
@@ -64,6 +79,9 @@
       "str": 4,
       "agi": 5,
       "int": 8,
+      "wis": 9,
+      "luck": 6,
+      "traits": ["熟悉毒物与疾病", "不惧腐败环境", "忌惮圣火"],
       "desc": "精通巫术与剧毒，擅长消耗战。",
       "image_url": "/assets/vendor/game-icons/delapouite/vampire-dracula.svg"
     }
@@ -73,6 +91,9 @@
       "id": 1,
       "name": "精钢阔剑",
       "base_dmg": 15,
+      "physical_damage": 15,
+      "physical_penetration": 12,
+      "accuracy_bonus": -3,
       "range": "近战",
       "type": "phys",
       "value": 40,
@@ -92,6 +113,9 @@
       "id": 2,
       "name": "淬毒双匕",
       "base_dmg": 8,
+      "physical_damage": 8,
+      "elemental_damage": {"poison": 2},
+      "accuracy_bonus": 8,
       "range": "近战",
       "type": "phys",
       "value": 60,
@@ -112,6 +136,9 @@
       "id": 3,
       "name": "余烬法杖",
       "base_dmg": 5,
+      "magic_damage": 0,
+      "elemental_damage": {"fire": 5},
+      "magic_penetration": 8,
       "range": "远程",
       "type": "magic",
       "value": 80,
@@ -123,7 +150,9 @@
           "name": "爆裂火球",
           "cost": 20,
           "multiplier": 2,
-          "desc": "造成200%火焰魔法伤害。"
+          "desc": "造成200%火焰魔法伤害，并可能施加灼烧。",
+          "status_effect": "burn",
+          "status_chance": 0.75
         }
       ]
     },
@@ -131,6 +160,8 @@
       "id": 4,
       "name": "守护枪盾",
       "base_dmg": 11,
+      "physical_damage": 11,
+      "physical_penetration": 5,
       "range": "近战",
       "type": "phys",
       "value": 50,
@@ -151,6 +182,9 @@
       "id": 5,
       "name": "精灵长弓",
       "base_dmg": 10,
+      "physical_damage": 10,
+      "physical_penetration": 8,
+      "accuracy_bonus": 6,
       "range": "远程",
       "type": "phys",
       "value": 70,
@@ -162,7 +196,9 @@
           "name": "风之矢",
           "cost": 15,
           "multiplier": 1.3,
-          "desc": "贯穿箭矢。"
+          "desc": "贯穿箭矢，风压可能将目标禁锢在原地。",
+          "status_effect": "root",
+          "status_chance": 0.5
         }
       ]
     },
@@ -170,6 +206,8 @@
       "id": 6,
       "name": "凋零魔杖",
       "base_dmg": 6,
+      "magic_damage": 6,
+      "magic_penetration": 10,
       "range": "远程",
       "type": "magic",
       "value": 90,
@@ -183,7 +221,9 @@
           "multiplier": 1.2,
           "desc": "造成伤害并将50%转化为自身血量。",
           "self_effect": "life_steal",
-          "self_effect_ratio": 0.5
+          "self_effect_ratio": 0.5,
+          "status_effect": "weakness",
+          "status_chance": 0.55
         }
       ]
     }
@@ -194,6 +234,8 @@
       "name": "平民布衣",
       "hp_bonus": 0,
       "def_rate": 0.0,
+      "physical_resistance": 0,
+      "magic_resistance": 0,
       "value": 0,
       "desc": "没有任何额外防御力的粗布便服。",
       "image_url": "/assets/vendor/game-icons/lucasms/shirt.svg"
@@ -203,6 +245,8 @@
       "name": "平民布衣",
       "hp_bonus": 0,
       "def_rate": 0,
+      "physical_resistance": 0,
+      "magic_resistance": 0,
       "value": 0,
       "desc": "无特殊加成。",
       "image_url": "/assets/vendor/game-icons/lucasms/shirt.svg"
@@ -212,6 +256,10 @@
       "name": "秘银板甲",
       "hp_bonus": 30,
       "def_rate": 0.3,
+      "physical_resistance": 43,
+      "magic_resistance": 5,
+      "evasion_bonus": -6,
+      "status_resistance": 8,
       "value": 50,
       "desc": "物理减伤30%，略微降低敏捷。",
       "image_url": "/assets/vendor/game-icons/lorc/plastron.svg"
@@ -221,6 +269,9 @@
       "name": "暗夜斗篷",
       "hp_bonus": 10,
       "def_rate": 0.1,
+      "physical_resistance": 11,
+      "magic_resistance": 10,
+      "evasion_bonus": 14,
       "value": 45,
       "desc": "受伤害减10%，大幅提升闪避。",
       "image_url": "/assets/vendor/game-icons/delapouite/cape.svg"
@@ -230,6 +281,10 @@
       "name": "星光法袍",
       "hp_bonus": 5,
       "def_rate": 0,
+      "physical_resistance": 2,
+      "magic_resistance": 25,
+      "elemental_resistances": {"arcane": 15},
+      "status_resistance": 8,
       "value": 60,
       "desc": "受魔伤减20%，法术判定大优势。",
       "image_url": "/assets/vendor/game-icons/lorc/robe.svg"
@@ -239,6 +294,10 @@
       "name": "龙鳞革甲",
       "hp_bonus": 20,
       "def_rate": 0.18,
+      "physical_resistance": 22,
+      "magic_resistance": 22,
+      "elemental_resistances": {"fire": 20, "poison": 12},
+      "status_resistance": 12,
       "value": 75,
       "desc": "全防，并提供部分环境免疫。",
       "image_url": "/assets/vendor/game-icons/delapouite/tribal-gear.svg"
@@ -248,6 +307,10 @@
       "name": "虚空障壁",
       "hp_bonus": 15,
       "def_rate": 0.05,
+      "physical_resistance": 6,
+      "magic_resistance": 35,
+      "elemental_resistances": {"arcane": 25},
+      "evasion_bonus": 5,
       "value": 90,
       "desc": "受击时有概率偏斜完全免疫伤害。",
       "image_url": "/assets/vendor/game-icons/lorc/crystal-growth.svg"
@@ -287,6 +350,9 @@
       "name": "烈火炸弹",
       "type": "dmg",
       "val": 25,
+      "damage_type": "true",
+      "status_effect": "burn",
+      "status_chance": 0.8,
       "value": 20,
       "desc": "25点无视防御真伤。",
       "image_url": "/assets/vendor/game-icons/lorc/fire-bomb.svg"
@@ -296,6 +362,9 @@
       "name": "震荡手雷",
       "type": "dmg",
       "val": 15,
+      "damage_type": "true",
+      "status_effect": "stun",
+      "status_chance": 0.55,
       "value": 25,
       "desc": "15点真伤，概率附加眩晕。",
       "image_url": "/assets/vendor/game-icons/delapouite/bolt-bomb.svg"
@@ -305,6 +374,7 @@
       "name": "万能抗毒丸",
       "type": "heal_hp",
       "val": 15,
+      "clear_negative_statuses": true,
       "value": 10,
       "desc": "恢复15HP，并解除身上一切异常。",
       "image_url": "/assets/vendor/game-icons/delapouite/olive.svg"

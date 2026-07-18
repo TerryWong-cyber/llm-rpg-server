@@ -6,11 +6,18 @@ from typing import Any
 
 from llm_rpg_server.shared.config import ContentProvider
 
+from .models import RaceCatalogDocument
+
 
 class Catalog:
     def __init__(self, content: ContentProvider):
         payload = content.document("catalog/game.json")
+        race_payload = RaceCatalogDocument.model_validate(content.document("catalog/races.json"))
         self.characters = payload["characters"]
+        self.races = {
+            race_id: definition.model_dump(mode="json")
+            for race_id, definition in race_payload.races.items()
+        }
         self.weapons = payload["weapons"]
         self.armors = payload["armors"]
         self.items = payload["items"]
@@ -25,6 +32,7 @@ class Catalog:
         with self._lock:
             return {
                 "characters": self._public_collection(self.characters),
+                "races": self._public_collection(self.races),
                 "weapons": self._public_collection(self.weapons),
                 "armors": self._public_collection(self.armors),
                 "items": self._public_collection(self.items),
@@ -69,6 +77,7 @@ class Catalog:
     def _validate(self) -> None:
         collections = {
             "characters": self.characters,
+            "races": self.races,
             "weapons": self.weapons,
             "armors": self.armors,
             "items": self.items,

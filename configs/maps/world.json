@@ -32,8 +32,10 @@
   },
   "action_rules": {
     "gather_cost": 8,
-    "combat_cost": 12,
-    "camp_restore": 60
+    "combat_cost": 0,
+    "camp_restore": 60,
+    "camp_hp_ratio": 0.4,
+    "camp_mp_ratio": 0.4
   },
   "gather_quantity": {"minimum": 1, "maximum": 3},
   "terrains": {
@@ -59,11 +61,11 @@
     "20": {"id": "20", "name": "湖泊浅滩", "emoji": "💧", "image_url": "/assets/vendor/game-icons/delapouite/waterfall.svg", "category": "resource", "tags": ["lake", "water", "resource"], "passable": true, "gatherable": true, "campable": true, "movement_cost": 3, "npc_chance_multiplier": 0.9, "clusters": 3, "gather_rules": [{"resource_id": "mat_4", "chance": 1.0, "minimum": 1, "maximum": 2, "conditions": {"periods": ["dawn", "day", "dusk"]}}, {"resource_id": "mat_26", "chance": 0.55, "minimum": 1, "maximum": 2}, {"resource_id": "mat_29", "chance": 0.5, "minimum": 1, "maximum": 2}, {"resource_id": "mat_7", "chance": 0.68, "minimum": 1, "maximum": 3, "conditions": {"periods": ["night"]}}, {"resource_id": "mat_27", "chance": 0.1, "minimum": 1, "maximum": 1}]}
   },
   "templates": {
-    "frost_crown_region": {"template_id": "frost_crown_region", "world_id": "known_world", "region_id": "frost_crown", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "15", "terrain_counts": {"15": 110, "2": 50, "6": 24, "1": 20, "8": 10, "9": 8, "10": 4, "12": 8, "13": 12, "4": 10}, "landmarks": {"34": "星骨营地"}},
-    "mountain_large": {"template_id": "mountain_large", "world_id": "known_world", "region_id": "broken_spine", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "2", "terrain_counts": {"2": 90, "6": 35, "7": 30, "1": 20, "15": 35, "4": 20, "9": 8, "10": 4, "12": 6, "13": 8}, "landmarks": {"210": "abandoned_lift"}, "landmark_terrains": {"210": "7"}},
-    "moon_vale_region": {"template_id": "moon_vale_region", "world_id": "known_world", "region_id": "moon_vale", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "4", "terrain_counts": {"4": 80, "1": 40, "11": 40, "17": 20, "12": 20, "8": 12, "9": 10, "10": 4, "13": 20, "6": 10}, "landmarks": {"85": "沉月墓园"}},
-    "desert_medium": {"template_id": "desert_medium", "world_id": "known_world", "region_id": "western_desert", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "5", "terrain_counts": {"5": 140, "16": 20, "2": 32, "7": 15, "4": 15, "9": 8, "10": 4, "12": 10, "13": 12}, "landmarks": {"44": "salt_road"}, "landmark_terrains": {"44": "13"}},
-    "mistwood_small": {"template_id": "mistwood_small", "world_id": "known_world", "region_id": "mistwood", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "1", "terrain_counts": {"4": 76, "1": 105, "11": 24, "8": 16, "9": 8, "10": 4, "6": 8, "12": 7, "13": 8}, "landmarks": {"12": "fallen_fir"}, "landmark_terrains": {"12": "1"}},
+    "frost_crown_region": {"template_id": "frost_crown_region", "world_id": "known_world", "region_id": "frost_crown", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "15", "terrain_counts": {"15": 110, "2": 50, "6": 24, "1": 20, "8": 10, "9": 8, "10": 4, "12": 8, "13": 12, "4": 10}, "landmarks": {"34": "星骨营地"}, "landmark_terrains": {"34": "10"}},
+    "mountain_large": {"template_id": "mountain_large", "world_id": "known_world", "region_id": "broken_spine", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "2", "terrain_counts": {"2": 90, "6": 35, "7": 30, "1": 20, "15": 35, "4": 20, "9": 8, "10": 4, "12": 6, "13": 8}, "landmarks": {"136": "铜炉镇", "210": "abandoned_lift"}, "landmark_terrains": {"136": "10", "210": "7"}},
+    "moon_vale_region": {"template_id": "moon_vale_region", "world_id": "known_world", "region_id": "moon_vale", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "4", "terrain_counts": {"4": 80, "1": 40, "11": 40, "17": 20, "12": 20, "8": 12, "9": 10, "10": 4, "13": 20, "6": 10}, "landmarks": {"34": "暮影镇", "85": "沉月墓园", "136": "银月城"}, "landmark_terrains": {"34": "10", "136": "10"}},
+    "desert_medium": {"template_id": "desert_medium", "world_id": "known_world", "region_id": "western_desert", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "5", "terrain_counts": {"5": 140, "16": 20, "2": 32, "7": 15, "4": 15, "9": 8, "10": 4, "12": 10, "13": 12}, "landmarks": {"44": "salt_road", "136": "盐冠城"}, "landmark_terrains": {"44": "13", "136": "10"}},
+    "mistwood_small": {"template_id": "mistwood_small", "world_id": "known_world", "region_id": "mistwood", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "1", "terrain_counts": {"4": 76, "1": 105, "11": 24, "8": 16, "9": 8, "10": 4, "6": 8, "12": 7, "13": 8}, "landmarks": {"12": "fallen_fir", "136": "晨曦镇"}, "landmark_terrains": {"12": "1", "136": "10"}},
     "emerald_coast_region": {"template_id": "emerald_coast_region", "world_id": "known_world", "region_id": "emerald_coast", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "19", "terrain_counts": {"19": 70, "4": 55, "1": 40, "8": 20, "20": 20, "3": 15, "9": 8, "10": 4, "12": 8, "13": 16}, "landmarks": {"190": "翡翠灯塔"}},
     "amber_steppe_region": {"template_id": "amber_steppe_region", "world_id": "known_world", "region_id": "amber_steppe", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "4", "terrain_counts": {"4": 120, "5": 40, "13": 20, "8": 14, "1": 20, "9": 10, "10": 4, "12": 12, "2": 10, "6": 6}, "landmarks": {"164": "百帐集会场"}},
     "silver_marsh_region": {"template_id": "silver_marsh_region", "world_id": "known_world", "region_id": "silver_marsh", "scale": "custom", "width": 16, "height": 16, "primary_terrain_id": "14", "terrain_counts": {"14": 90, "8": 35, "20": 30, "1": 35, "4": 25, "9": 10, "10": 4, "12": 10, "13": 12, "17": 5}, "landmarks": {"101": "银苇浮村"}},
