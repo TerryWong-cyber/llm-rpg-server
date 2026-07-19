@@ -40,6 +40,19 @@ def world_time(container: Container):
     }
 
 
+@router.get("/resources")
+def player_resources(player_id: str, container: Container):
+    profile = container.exploration.settle_resources(player_id)
+    return {
+        "player": _player_payload(container, profile),
+        "world_time": container.exploration.time_snapshot().model_dump(mode="json"),
+        "actions": {
+            key: value.model_dump(mode="json")
+            for key, value in container.exploration.actions(player_id).items()
+        },
+    }
+
+
 @router.post("/enter")
 def enter_map(request: EnterMapRequest, container: Container):
     current, encounter = container.exploration.enter(
@@ -188,24 +201,7 @@ def _map_response(
         "terrains_meta": container.exploration.terrains,
         "resources_meta": container.catalog.resources,
         "inventory_materials": profile.inventory.materials,
-        "player": {
-            "current_hp": profile.current_hp,
-            "max_hp": profile.max_hp,
-            "current_mp": profile.current_mp,
-            "max_mp": profile.max_mp,
-            "stamina": profile.stamina,
-            "max_stamina": profile.max_stamina,
-            "combat_statuses": [item.model_dump(mode="json") for item in profile.combat_statuses],
-            "inventory_items": profile.inventory.items,
-            "last_camped_game_day": profile.last_camped_game_day,
-            "sleep": profile.sleep.model_dump(mode="json") if profile.sleep else None,
-            "progression": container.growth.public_progress(profile),
-            "active_quests": {
-                key: value.model_dump(mode="json")
-                for key, value in profile.active_quests.items()
-            },
-            "completed_quests": list(profile.completed_quests),
-        },
+        "player": _player_payload(container, profile),
         "world": container.exploration.world_overview(),
         "world_time": container.exploration.time_snapshot().model_dump(mode="json"),
         "actions": {
@@ -216,6 +212,27 @@ def _map_response(
         "event_log": [entry.model_dump(mode="json") for entry in profile.world_event_log],
         "transition": transition.model_dump(mode="json") if transition else None,
         "encounter": encounter.model_dump(mode="json") if encounter else None,
+    }
+
+
+def _player_payload(container: AppContainer, profile):
+    return {
+        "current_hp": profile.current_hp,
+        "max_hp": profile.max_hp,
+        "current_mp": profile.current_mp,
+        "max_mp": profile.max_mp,
+        "stamina": profile.stamina,
+        "max_stamina": profile.max_stamina,
+        "combat_statuses": [item.model_dump(mode="json") for item in profile.combat_statuses],
+        "inventory_items": profile.inventory.items,
+        "last_camped_game_day": profile.last_camped_game_day,
+        "sleep": profile.sleep.model_dump(mode="json") if profile.sleep else None,
+        "progression": container.growth.public_progress(profile),
+        "active_quests": {
+            key: value.model_dump(mode="json")
+            for key, value in profile.active_quests.items()
+        },
+        "completed_quests": list(profile.completed_quests),
     }
 
 
