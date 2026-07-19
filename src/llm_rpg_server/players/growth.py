@@ -54,6 +54,13 @@ class GrowthService:
         self.rules = GrowthRulesDocument.model_validate(
             content.document("progression/rules.json")
         )
+        self.clock: Any | None = None
+
+    def set_clock(self, clock: Any) -> None:
+        self.clock = clock
+
+    def _game_hour(self) -> int | None:
+        return self.clock.snapshot().total_game_hours if self.clock is not None else None
 
     def experience_to_next(self, level: int) -> int:
         curve = self.rules.level_curve
@@ -144,6 +151,8 @@ class GrowthService:
                     requirement.model_dump(mode="json")
                     for requirement in getattr(hook, "requirements", [])
                 ],
+                related_npc_ids=[npc_id],
+                started_game_hour=self._game_hour(),
             )
 
     def complete_quest(self, player_id: str, npc_id: str, hook_id: str) -> dict[str, Any]:
@@ -157,6 +166,10 @@ class GrowthService:
             self._consume_quest_items(profile, quest)
             reward = self.apply_experience(profile, quest.xp_reward)
             profile.active_quests.pop(hook_id, None)
+            completed = quest.model_copy(deep=True)
+            completed.status = "completed"
+            completed.completed_game_hour = self._game_hour()
+            profile.quest_history[hook_id] = completed
             if hook_id not in profile.completed_quests:
                 profile.completed_quests.append(hook_id)
             return reward

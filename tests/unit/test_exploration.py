@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -119,9 +119,8 @@ def test_crossing_region_edge_enters_neighbor_from_opposite_side(content, catalo
     assert destination.cells[destination.current_cell_id].x == 0
 
 
-def test_camp_restores_stamina_once_per_game_day(content, catalog):
-    now = datetime(2026, 7, 17, 0, 0, tzinfo=timezone.utc)
-    players, player, service = create_service(content, catalog, now=now)
+def test_camp_starts_interruptible_six_hour_sleep(content, catalog):
+    players, player, service, now = create_controlled_service(content, catalog, game_hour=12)
     service.enter(player.player_id, seed=9)
     set_current_terrain(players, player.player_id, "4")
     with players.transaction(player.player_id) as profile:
@@ -129,15 +128,20 @@ def test_camp_restores_stamina_once_per_game_day(content, catalog):
         profile.current_hp = 10
         profile.current_mp = 5
     rested = service.camp(player.player_id)
-    assert rested.stamina == 80
-    assert rested.current_hp > 10
-    assert rested.current_mp > 5
+    assert rested.sleep is not None
+    assert rested.stamina == 20
+    now["value"] += timedelta(seconds=20)
+    interrupted = service.interrupt_sleep(player.player_id)
+    assert interrupted.sleep is None
+    assert interrupted.stamina == 20 + (interrupted.max_stamina - 20) * 2 // 6
+    assert interrupted.current_hp == 10 + (interrupted.max_hp - 10) * 2 // 6
+    assert interrupted.current_mp == 5 + (interrupted.max_mp - 5) * 2 // 6
     with pytest.raises(ValueError, match="已经充分休息"):
         service.camp(player.player_id)
 
 
-def test_inn_fully_restores_global_resources_and_clears_statuses(content, catalog):
-    players, player, service = create_service(content, catalog)
+def test_inn_sleep_fully_restores_resources_after_sixty_seconds(content, catalog):
+    players, player, service, now = create_controlled_service(content, catalog, game_hour=12)
     service.enter(player.player_id, seed=9)
     set_current_terrain(players, player.player_id, "9")
     with players.transaction(player.player_id) as profile:
@@ -153,11 +157,39 @@ def test_inn_fully_restores_global_resources_and_clears_statuses(content, catalo
         )]
 
     rested = service.rest_at_inn(player.player_id)
+    assert rested.sleep is not None
+    now["value"] += timedelta(seconds=60)
+    completed = service.settle_resources(player.player_id)
+    assert completed.sleep is None
+    assert completed.current_hp == completed.max_hp
+    assert completed.current_mp == completed.max_mp
+    assert completed.stamina == completed.max_stamina
+    assert completed.combat_statuses == []
 
-    assert rested.current_hp == rested.max_hp
-    assert rested.current_mp == rested.max_mp
-    assert rested.stamina == rested.max_stamina
-    assert rested.combat_statuses == []
+
+def test_gathering_cost_is_three_and_movement_costs_are_reduced(content, catalog):
+    players, player, service = create_service(content, catalog)
+    current, _ = service.enter(player.player_id, seed=5)
+    forest_id = set_current_terrain(players, player.player_id, "1")
+    before = players.get(player.player_id).stamina
+    service.gather(player.player_id, forest_id)
+    assert players.get(player.player_id).stamina == before - 3
+    assert max(cell.movement_cost for cell in current.cells) <= 3
+
+
+def test_stamina_recovers_one_point_per_game_hour(content, catalog):
+    players, player, service, now = create_controlled_service(content, catalog, game_hour=12)
+    service.enter(player.player_id, seed=5)
+    with players.transaction(player.player_id) as profile:
+        profile.stamina = 10
+
+    definition = content.document("maps/world.json")["time"]
+    now["value"] += timedelta(
+        seconds=3 * float(definition["real_seconds_per_game_hour"])
+    )
+    settled = service.settle_resources(player.player_id)
+
+    assert settled.stamina == 13
 
 
 def test_world_clock_starts_at_year_zero_and_matches_time_conditions(content, catalog):

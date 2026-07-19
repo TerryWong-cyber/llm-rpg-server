@@ -20,8 +20,13 @@ def seed_demo(container: Container):
 
 
 @router.get("/npcs")
-def list_npcs(container: Container, terrain_id: str | None = None, cell_id: int | None = None):
-    return {"npcs": container.npc_interactions.list_npcs(terrain_id, cell_id)}
+def list_npcs(
+    container: Container,
+    terrain_id: str | None = None,
+    cell_id: int | None = None,
+    player_id: str | None = None,
+):
+    return {"npcs": container.npc_interactions.list_npcs(terrain_id, cell_id, player_id)}
 
 
 @router.get("/npcs/{npc_id}")
@@ -36,6 +41,7 @@ def get_npc(npc_id: str, container: Container, player_id: str | None = None):
 @router.post("/npcs/{npc_id}/dialogue")
 def dialogue(npc_id: str, request: NPCDialogueRequest, container: Container):
     container.players.get(request.player_id)
+    container.resources.settle(request.player_id, interrupt_sleep=True)
     response = container.npc_interactions.interact(npc_id, request.player_id, request.message)
     response["profile"] = container.players.get(request.player_id).model_dump(mode="json")
     return response
@@ -47,10 +53,64 @@ def npc_memories(npc_id: str, player_id: str, container: Container):
     return {"npc_id": npc_id, "memories": container.npc_interactions.npc_memories(npc_id, player_id)}
 
 
+@router.get("/npcs/{npc_id}/conversations")
+def npc_conversations(npc_id: str, player_id: str, container: Container):
+    container.players.get(player_id)
+    return {
+        "npc_id": npc_id,
+        "conversations": container.npc_interactions.conversations(npc_id, player_id),
+    }
+
+
 @router.get("/players/{player_id}/memories")
 def player_memories(player_id: str, container: Container):
     container.players.get(player_id)
     return {"player_id": player_id, "memories": container.npc_interactions.player_memories(player_id)}
+
+
+@router.get("/players/{player_id}/journal")
+def player_journal(player_id: str, container: Container):
+    profile = container.resources.settle(player_id)
+    contacts = []
+    for npc_id in profile.encountered_npc_ids:
+        npc = container.world_repository.get_npc(npc_id)
+        relationship = container.world_repository.get_or_create_relationship(npc, player_id)
+        contacts.append({
+            "npc": container.npc_interactions.public_npc(npc),
+            "relationship": relationship,
+            "memories": container.npc_interactions.npc_memories(npc_id, player_id),
+            "conversations": container.npc_interactions.conversations(npc_id, player_id),
+        })
+
+    def quest_payload(quest):
+        payload = quest.model_dump(mode="json")
+        objectives = []
+        for requirement in quest.requirements:
+            item = dict(requirement)
+            if item.get("kind") == "region":
+                current = (profile.current_map or {}).get("region_id")
+                item.update({"current": current, "completed": current == item.get("region_id")})
+            else:
+                collection = (
+                    profile.inventory.materials
+                    if item.get("item_type") == "material" else profile.inventory.items
+                )
+                current = collection.get(str(item.get("item_id")), 0)
+                item.update({"current": current, "completed": current >= int(item.get("quantity", 1))})
+            objectives.append(item)
+        payload["requirements"] = objectives
+        payload["related_npcs"] = [
+            container.npc_interactions.public_npc(container.world_repository.get_npc(npc_id))
+            for npc_id in quest.related_npc_ids
+        ]
+        return payload
+
+    return {
+        "events": [entry.model_dump(mode="json") for entry in reversed(profile.world_event_log)],
+        "active_quests": [quest_payload(item) for item in profile.active_quests.values()],
+        "completed_quests": [quest_payload(item) for item in profile.quest_history.values()],
+        "contacts": contacts,
+    }
 
 
 @router.get("/facts")

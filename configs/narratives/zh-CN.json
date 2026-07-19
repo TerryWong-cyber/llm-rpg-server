@@ -47,6 +47,7 @@
         "not_food": "该物品不能用于恢复探索精力",
         "cannot_camp": "此处不适合扎营休息",
         "camp_cooldown": "今天已经充分休息过了，等到下一个游戏日再扎营",
+        "sleeping": "正在睡眠，行动将打断休息并按已睡整小时结算恢复",
         "inn_unavailable": "只有村庄或城镇的旅店才能提供完整休整",
         "event_unknown": "这个世界事件不存在",
         "event_not_active": "当前地块没有可继续处理的这个事件",

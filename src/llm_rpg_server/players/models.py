@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -73,6 +74,21 @@ class QuestProgress(BaseModel):
     summary: str
     xp_reward: int = Field(ge=0)
     requirements: list[dict[str, Any]] = Field(default_factory=list)
+    related_npc_ids: list[str] = Field(default_factory=list)
+    status: Literal["active", "completed"] = "active"
+    started_game_hour: int | None = None
+    completed_game_hour: int | None = None
+
+
+class SleepState(BaseModel):
+    started_at: datetime
+    started_game_hour: int = Field(ge=0)
+    duration_seconds: int = Field(default=60, gt=0)
+    duration_game_hours: int = Field(default=6, gt=0)
+    start_hp: int = Field(ge=0)
+    start_mp: int = Field(ge=0)
+    start_stamina: int = Field(ge=0)
+    location_kind: Literal["camp", "inn"]
 
 
 class PlayerProfile(BaseModel):
@@ -88,6 +104,7 @@ class PlayerProfile(BaseModel):
     attributes: CharacterAttributes = Field(default_factory=CharacterAttributes)
     active_quests: dict[str, QuestProgress] = Field(default_factory=dict)
     completed_quests: list[str] = Field(default_factory=list)
+    quest_history: dict[str, QuestProgress] = Field(default_factory=dict)
     gold: int = Field(ge=0)
     inventory: Inventory
     current_hp: int = Field(default=1, ge=0)
@@ -105,5 +122,8 @@ class PlayerProfile(BaseModel):
     current_map: dict[str, Any] | None = None
     world_maps: dict[str, dict[str, Any]] = Field(default_factory=dict)
     last_camped_game_day: int | None = None
+    last_stamina_recovery_game_hour: int | None = None
+    sleep: SleepState | None = None
+    encountered_npc_ids: list[str] = Field(default_factory=list)
     world_event_states: dict[str, WorldEventState] = Field(default_factory=dict)
     world_event_log: list[WorldEventLogEntry] = Field(default_factory=list)

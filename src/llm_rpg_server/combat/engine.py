@@ -522,15 +522,13 @@ class CombatEngine:
         if skill is None:
             raise ValueError(self.content.text("errors.room.invalid_action"))
         legacy_cost = int(skill.get("cost", 0))
-        resource = skill.get("resource")
-        is_physical = resource == "stamina" or (resource is None and weapon.get("type") == "phys")
         return {
             "id": str(skill["id"]),
             "name": self.content.text("combat.action.skill", skill_name=skill["name"]),
             "description": skill.get("desc", ""),
             "cost": legacy_cost,
-            "mp_cost": int(skill.get("mp_cost", 0 if is_physical else legacy_cost)),
-            "stamina_cost": int(skill.get("stamina_cost", legacy_cost if is_physical else 0)),
+            "mp_cost": int(skill.get("mp_cost", legacy_cost)),
+            "stamina_cost": 0,
             "type": "skill",
             "multiplier": float(skill.get("multiplier", 1)),
             "status_effect": skill.get("status_effect"),

@@ -138,3 +138,13 @@ class GeneratedDialogue(BaseModel):
     tone: str
     mentioned_hook_id: str | None = None
     memory_summary: str = ""
+
+
+class ConversationTurn(BaseModel):
+    turn_id: str = Field(default_factory=lambda: uuid4().hex)
+    npc_id: str
+    player_id: str
+    player_message: str
+    npc_reply: str
+    tone: str = ""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

@@ -6,6 +6,7 @@ from typing import Any, Literal, Protocol
 
 from llm_rpg_server.catalog import Catalog
 from llm_rpg_server.players import PlayerRepository
+from llm_rpg_server.players.resources import ResourceLifecycleService
 from llm_rpg_server.players.models import PlayerProfile, WorldEventLogEntry, WorldEventState
 from llm_rpg_server.shared.config import ContentProvider
 from llm_rpg_server.world.time import WorldClock, WorldTimeSnapshot
@@ -74,7 +75,20 @@ class ExplorationService:
         }
         self._latest_events: dict[str, WorldEventResult | None] = {}
         self.event_participant_resolver: EventParticipantResolver | None = None
+        self.resources: ResourceLifecycleService | None = ResourceLifecycleService(players, self.clock)
         self._validate_configuration()
+
+    def set_resource_lifecycle(self, resources: ResourceLifecycleService) -> None:
+        self.resources = resources
+
+    def _prepare_action(self, player_id: str) -> None:
+        if self.resources is not None:
+            self.resources.settle(player_id, interrupt_sleep=True)
+
+    def settle_resources(self, player_id: str) -> PlayerProfile:
+        if self.resources is not None:
+            return self.resources.settle(player_id)
+        return self.players.get(player_id)
 
     def set_encounter_resolver(self, resolver: EncounterResolver) -> None:
         self.encounter_resolver = resolver
@@ -106,6 +120,8 @@ class ExplorationService:
         refresh: bool = False,
         seed: int | None = None,
     ) -> tuple[MapInstance, EncounterResult | None]:
+        if self.resources is not None:
+            self.resources.settle(player_id, interrupt_sleep=refresh)
         with self.players.transaction(player_id) as profile:
             existing = MapInstance.model_validate(profile.current_map) if profile.current_map else None
             birthplace = self.catalog.races[profile.race_id]["birthplace"]
@@ -136,6 +152,7 @@ class ExplorationService:
             return current, encounter
 
     def move(self, player_id: str, cell_id: int) -> tuple[MapInstance, EncounterResult | None]:
+        self._prepare_action(player_id)
         with self.players.transaction(player_id) as profile:
             current = self._current(profile)
             cell = self._cell(current, cell_id)
@@ -149,6 +166,7 @@ class ExplorationService:
         player_id: str,
         direction: Direction,
     ) -> tuple[MapInstance, EncounterResult | None, MapTransition | None]:
+        self._prepare_action(player_id)
         delta = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}[direction]
         with self.players.transaction(player_id) as profile:
             current = self._current(profile)
@@ -197,6 +215,7 @@ class ExplorationService:
         player_id: str,
         cell_id: int,
     ) -> tuple[dict[str, int], MapInstance, EncounterResult | None]:
+        self._prepare_action(player_id)
         with self.players.transaction(player_id) as profile:
             current = self._current(profile)
             cell = self._cell(current, cell_id)
@@ -244,6 +263,7 @@ class ExplorationService:
             return loot, current, encounter
 
     def eat(self, player_id: str, item_id: str) -> PlayerProfile:
+        self._prepare_action(player_id)
         definition = self.catalog.items.get(item_id)
         restore = int(definition.get("stamina_restore", 0)) if definition else 0
         if definition is None or restore <= 0:
@@ -260,6 +280,7 @@ class ExplorationService:
         return self.players.get(player_id)
 
     def camp(self, player_id: str) -> PlayerProfile:
+        self._prepare_action(player_id)
         with self.players.transaction(player_id) as profile:
             current = self._current(profile)
             cell = current.cells[current.current_cell_id]
@@ -275,36 +296,30 @@ class ExplorationService:
                 and profile.current_mp >= profile.max_mp
             ):
                 raise ValueError(self.content.text("errors.map.stamina_full"))
-            profile.stamina = min(
-                profile.max_stamina,
-                profile.stamina + int(self.action_rules.get("camp_restore", 60)),
-            )
-            profile.current_hp = min(
-                profile.max_hp,
-                profile.current_hp + max(1, round(profile.max_hp * float(self.action_rules.get("camp_hp_ratio", 0.4)))),
-            )
-            profile.current_mp = min(
-                profile.max_mp,
-                profile.current_mp + max(1, round(profile.max_mp * float(self.action_rules.get("camp_mp_ratio", 0.4)))),
-            )
             profile.last_camped_game_day = game_day
-        return self.players.get(player_id)
+        if self.resources is None:
+            raise RuntimeError("Resource lifecycle is not configured")
+        return self.resources.start_sleep(player_id, "camp")
 
     def rest_at_inn(self, player_id: str) -> PlayerProfile:
+        self._prepare_action(player_id)
         with self.players.transaction(player_id) as profile:
             current = self._current(profile)
             cell = current.cells[current.current_cell_id]
             terrain = self.terrains.get(cell.terrain_id, {})
             if "inn" not in terrain.get("interactions", []):
                 raise ValueError(self.content.text("errors.map.inn_unavailable"))
-            profile.current_hp = profile.max_hp
-            profile.current_mp = profile.max_mp
-            profile.stamina = profile.max_stamina
-            profile.combat_statuses = []
-        return self.players.get(player_id)
+        if self.resources is None:
+            raise RuntimeError("Resource lifecycle is not configured")
+        return self.resources.start_sleep(player_id, "inn")
+
+    def interrupt_sleep(self, player_id: str) -> PlayerProfile:
+        if self.resources is None:
+            return self.players.get(player_id)
+        return self.resources.settle(player_id, interrupt_sleep=True)
 
     def actions(self, player_id: str) -> dict[str, ActionAvailability]:
-        profile = self.players.get(player_id)
+        profile = self.settle_resources(player_id)
         if not profile.current_map:
             return {}
         current = MapInstance.model_validate(profile.current_map)
@@ -326,35 +341,37 @@ class ExplorationService:
             camp_reason = self.content.text("errors.map.cannot_camp")
         elif profile.last_camped_game_day == camp_day:
             camp_reason = self.content.text("errors.map.camp_cooldown")
+        sleeping = profile.sleep is not None
+        sleeping_reason = self.content.text("errors.map.sleeping") if sleeping else ""
         return {
             "gather": ActionAvailability(
                 available=(
                     cell.gatherable and not cell.gathered and has_timed_gather
-                    and profile.stamina >= gather_cost
+                    and profile.stamina >= gather_cost and not sleeping
                 ),
-                reason=self._gather_reason(cell, has_timed_gather, profile.stamina, gather_cost),
+                reason=sleeping_reason or self._gather_reason(cell, has_timed_gather, profile.stamina, gather_cost),
                 cost=gather_cost,
             ),
             "camp": ActionAvailability(
-                available=can_camp and (
+                available=not sleeping and can_camp and (
                     profile.stamina < profile.max_stamina
                     or profile.current_hp < profile.max_hp
                     or profile.current_mp < profile.max_mp
                 ),
-                reason=camp_reason,
+                reason=sleeping_reason or camp_reason,
             ),
-            "shop": ActionAvailability(available=shop_open, reason=shop_reason),
+            "shop": ActionAvailability(available=not sleeping and shop_open, reason=sleeping_reason or shop_reason),
             "inn": ActionAvailability(
-                available=can_use_inn and (
+                available=not sleeping and can_use_inn and (
                     profile.current_hp < profile.max_hp
                     or profile.current_mp < profile.max_mp
                     or profile.stamina < profile.max_stamina
                     or bool(profile.combat_statuses)
                 ),
-                reason="" if can_use_inn else self.content.text("errors.map.inn_unavailable"),
+                reason=sleeping_reason or ("" if can_use_inn else self.content.text("errors.map.inn_unavailable")),
             ),
             "eat": ActionAvailability(
-                available=any(
+                available=not sleeping and any(
                     quantity > 0 and int(self.catalog.items.get(item_id, {}).get("stamina_restore", 0)) > 0
                     for item_id, quantity in profile.inventory.items.items()
                 ) and profile.stamina < profile.max_stamina,
@@ -556,7 +573,7 @@ class ExplorationService:
             tags=list(terrain.get("tags", [])),
             gatherable=bool(terrain.get("gatherable", False)),
             campable=bool(terrain.get("campable", False)),
-            movement_cost=int(terrain.get("movement_cost", 1)),
+            movement_cost=self._movement_cost(terrain),
             npc_chance_multiplier=float(terrain.get("npc_chance_multiplier", 1.0)),
             interaction_ids=list(terrain.get("interactions", [])),
         )
@@ -574,7 +591,7 @@ class ExplorationService:
             cell.tags = list(terrain.get("tags", []))
             cell.gatherable = bool(terrain.get("gatherable", False))
             cell.campable = bool(terrain.get("campable", False))
-            cell.movement_cost = int(terrain.get("movement_cost", 1))
+            cell.movement_cost = self._movement_cost(terrain)
             cell.npc_chance_multiplier = float(terrain.get("npc_chance_multiplier", 1.0))
             cell.interaction_ids = list(terrain.get("interactions", []))
 
@@ -695,6 +712,9 @@ class ExplorationService:
             state.ended_game_day = None
             if rule["event_id"] not in cell.triggered_event_ids:
                 cell.triggered_event_ids.append(rule["event_id"])
+            discover = getattr(self.event_participant_resolver, "discover_participant", None)
+            if discover is not None:
+                discover(rule, profile.player_id)
             self._append_event_log(
                 profile, current, cell, rule, now, "triggered", rule["title"], rule["description"]
             )
@@ -707,6 +727,7 @@ class ExplorationService:
         event_id: str,
         action_id: str,
     ) -> tuple[MapInstance, WorldEventResult]:
+        self._prepare_action(player_id)
         with self.players.transaction(player_id) as profile:
             current = self._current(profile)
             cell = current.cells[current.current_cell_id]
@@ -991,6 +1012,13 @@ class ExplorationService:
         if profile.stamina < cost:
             raise ValueError(self.content.text("errors.map.stamina"))
         profile.stamina -= cost
+
+    def _movement_cost(self, terrain: dict[str, Any]) -> int:
+        configured = int(terrain.get("movement_cost", 1))
+        if configured <= 0:
+            return 0
+        multiplier = float(self.action_rules.get("movement_cost_multiplier", 1))
+        return max(1, round(configured * multiplier))
 
     def _gather_reason(self, cell: MapCell, available_now: bool, stamina: int, cost: int) -> str:
         if not cell.gatherable:

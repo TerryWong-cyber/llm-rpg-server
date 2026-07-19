@@ -50,6 +50,11 @@ class WorldEventCoordinator:
             return {"type": "monster", **self.monsters.public_view(actor_id)}
         return None
 
+    def discover_participant(self, rule: dict[str, Any], player_id: str) -> None:
+        actor = rule.get("actor") or {}
+        if actor.get("type") == "npc" and actor.get("id"):
+            self.npcs.discover(actor["id"], player_id)
+
     def perform(
         self,
         player_id: str,
@@ -61,6 +66,8 @@ class WorldEventCoordinator:
         kind = action.get("kind", "narrative")
         interaction: dict[str, Any] = {"type": kind}
         room: GameRoom | None = None
+        if action.get("target_id") and kind in {"open_npc", "start_quest", "npc_combat"}:
+            self.npcs.discover(action["target_id"], player_id)
 
         if kind == "use_item":
             if not item_id:

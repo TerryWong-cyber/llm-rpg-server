@@ -5,7 +5,7 @@ from copy import deepcopy
 from threading import RLock
 from typing import Protocol
 
-from .models import MemoryEntry, NPCProfile, NPCRelationship
+from .models import ConversationTurn, MemoryEntry, NPCProfile, NPCRelationship
 
 
 class WorldRepository(Protocol):
@@ -50,6 +50,14 @@ class WorldRepository(Protocol):
 
     def list_world_facts(self, limit: int = 50) -> list[MemoryEntry]: ...
 
+    def mark_encountered(self, player_id: str, npc_id: str) -> None: ...
+
+    def list_encountered(self, player_id: str) -> list[str]: ...
+
+    def append_conversation(self, turn: ConversationTurn) -> None: ...
+
+    def list_conversations(self, npc_id: str, player_id: str, limit: int = 100) -> list[ConversationTurn]: ...
+
 
 class InMemoryWorldRepository:
     def __init__(self):
@@ -58,6 +66,8 @@ class InMemoryWorldRepository:
         self._npc_memories: dict[tuple[str, str], list[MemoryEntry]] = defaultdict(list)
         self._player_memories: dict[str, list[MemoryEntry]] = defaultdict(list)
         self._world_facts: list[MemoryEntry] = []
+        self._encountered: dict[str, set[str]] = defaultdict(set)
+        self._conversations: dict[tuple[str, str], list[ConversationTurn]] = defaultdict(list)
         self._lock = RLock()
 
     def register_npc(self, npc: NPCProfile, overwrite: bool = False) -> NPCProfile:
@@ -185,3 +195,24 @@ class InMemoryWorldRepository:
             values = deepcopy(self._world_facts)
         values.sort(key=lambda item: item.created_at, reverse=True)
         return values[:limit]
+
+    def mark_encountered(self, player_id: str, npc_id: str) -> None:
+        with self._lock:
+            if npc_id not in self._npcs:
+                raise KeyError(npc_id)
+            self._encountered[player_id].add(npc_id)
+
+    def list_encountered(self, player_id: str) -> list[str]:
+        with self._lock:
+            return sorted(self._encountered[player_id])
+
+    def append_conversation(self, turn: ConversationTurn) -> None:
+        with self._lock:
+            self._conversations[(turn.npc_id, turn.player_id)].append(deepcopy(turn))
+
+    def list_conversations(
+        self, npc_id: str, player_id: str, limit: int = 100
+    ) -> list[ConversationTurn]:
+        with self._lock:
+            values = deepcopy(self._conversations[(npc_id, player_id)])
+        return values[-limit:]

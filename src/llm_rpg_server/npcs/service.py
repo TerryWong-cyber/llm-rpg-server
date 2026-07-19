@@ -6,7 +6,9 @@ from typing import Any
 from llm_rpg_server.shared.config import ContentProvider
 
 from .dialogue import NPCDialogueService
-from .models import NPCCombatProfile, NPCProfile, NPCRelationship, StoryHook, TriggerCondition
+from llm_rpg_server.players import PlayerRepository
+
+from .models import ConversationTurn, NPCCombatProfile, NPCProfile, NPCRelationship, StoryHook, TriggerCondition
 from .repository import WorldRepository
 
 
@@ -20,11 +22,13 @@ class NPCInteractionService:
         repository: WorldRepository,
         dialogue_service: NPCDialogueService,
         content: ContentProvider,
+        players: PlayerRepository | None = None,
     ):
         self.repository = repository
         self.dialogue_service = dialogue_service
         self.content = content
         self.rules = content.document("npcs/interaction_rules.json")
+        self.players = players
         self._story_hook_listener: Callable[[str, str, StoryHook], None] | None = None
 
     def set_story_hook_listener(
@@ -53,11 +57,30 @@ class NPCInteractionService:
             "combat_tactics": list(npc.combat.tactics) if npc.combat else [],
         }
 
-    def list_npcs(self, terrain_id: str | None = None, cell_id: int | None = None) -> list[dict[str, Any]]:
-        return [self.public_npc(npc) for npc in self.repository.list_npcs(terrain_id, cell_id)]
+    def list_npcs(
+        self,
+        terrain_id: str | None = None,
+        cell_id: int | None = None,
+        player_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        values = self.repository.list_npcs(terrain_id, cell_id)
+        if player_id is not None:
+            known = set(self.repository.list_encountered(player_id))
+            if self.players is not None:
+                known.update(self.players.get(player_id).encountered_npc_ids)
+            values = [npc for npc in values if npc.npc_id in known]
+        return [self.public_npc(npc) for npc in values]
+
+    def discover(self, npc_id: str, player_id: str) -> None:
+        self.repository.mark_encountered(player_id, npc_id)
+        if self.players is not None:
+            with self.players.transaction(player_id) as profile:
+                if npc_id not in profile.encountered_npc_ids:
+                    profile.encountered_npc_ids.append(npc_id)
 
     def get_npc_view(self, npc_id: str, player_id: str) -> dict[str, Any]:
         npc = self.repository.get_npc(npc_id)
+        self.discover(npc_id, player_id)
         relationship = self.repository.get_or_create_relationship(npc, player_id)
         return {"npc": self.public_npc(npc), "relationship": relationship}
 
@@ -95,6 +118,13 @@ class NPCInteractionService:
             importance=4 if combat_trigger or activated_hook else 2,
             facts={"intent": intent, "activated_hook": activated_hook.hook_id if activated_hook else None},
         )
+        self.repository.append_conversation(ConversationTurn(
+            npc_id=npc_id,
+            player_id=player_id,
+            player_message=message[:500],
+            npc_reply=dialogue.reply,
+            tone=dialogue.tone,
+        ))
         return {
             "npc_id": npc_id,
             "reply": dialogue.reply,
@@ -113,6 +143,7 @@ class NPCInteractionService:
         return "greeting"
 
     def start_combat(self, npc_id: str, player_id: str, trigger_id: str) -> tuple[NPCProfile, NPCCombatProfile]:
+        self.discover(npc_id, player_id)
         npc = self.repository.get_npc(npc_id)
         if npc.combat is None:
             raise ValueError(self.content.text("errors.npc.no_combat"))
@@ -151,6 +182,7 @@ class NPCInteractionService:
         *,
         source: str,
     ) -> StoryHook:
+        self.discover(npc_id, player_id)
         npc = self.repository.get_npc(npc_id)
         hook = next((item for item in npc.story_hooks if item.hook_id == hook_id), None)
         if hook is None:
@@ -269,6 +301,10 @@ class NPCInteractionService:
     def npc_memories(self, npc_id: str, player_id: str) -> list:
         self.repository.get_npc(npc_id)
         return self.repository.list_npc_memories(npc_id, player_id)
+
+    def conversations(self, npc_id: str, player_id: str) -> list:
+        self.repository.get_npc(npc_id)
+        return self.repository.list_conversations(npc_id, player_id)
 
     def world_facts(self) -> list:
         return self.repository.list_world_facts()

@@ -31,7 +31,8 @@
     "large": {"width": 16, "height": 16}
   },
   "action_rules": {
-    "gather_cost": 8,
+    "gather_cost": 3,
+    "movement_cost_multiplier": 0.6,
     "combat_cost": 0,
     "camp_restore": 60,
     "camp_hp_ratio": 0.4,

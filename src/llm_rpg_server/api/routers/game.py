@@ -34,6 +34,7 @@ def create_character(request: CreateCharacterRequest, container: Container):
 
 @router.post("/character/allocate")
 def allocate_attributes(request: AttributeAllocationRequest, container: Container):
+    container.resources.settle(request.player_id, interrupt_sleep=True)
     profile = container.growth.allocate(request.player_id, request.allocations)
     return {
         "status": "success",
@@ -44,6 +45,7 @@ def allocate_attributes(request: AttributeAllocationRequest, container: Containe
 
 @router.post("/character/equipment")
 def set_equipment(request: EquipmentRequest, container: Container):
+    container.resources.settle(request.player_id, interrupt_sleep=True)
     profile = container.player_service.set_equipment(
         request.player_id,
         request.item_type,
@@ -54,6 +56,7 @@ def set_equipment(request: EquipmentRequest, container: Container):
 
 @router.post("/quest/complete")
 def complete_quest(request: QuestCompleteRequest, container: Container):
+    container.resources.settle(request.player_id, interrupt_sleep=True)
     npc = container.world_repository.get_npc(request.npc_id)
     hook = next((item for item in npc.story_hooks if item.hook_id == request.hook_id), None)
     if hook is None:
@@ -78,18 +81,21 @@ def complete_quest(request: QuestCompleteRequest, container: Container):
 
 @router.post("/shop/buy")
 def buy_item(request: TradeRequest, container: Container):
+    container.resources.settle(request.player_id, interrupt_sleep=True)
     profile = container.economy.buy(request.player_id, request.item_type, request.item_id)
     return _profile_or_snapshot(container, request.thread_id, profile.model_dump(mode="json"))
 
 
 @router.post("/shop/sell")
 def sell_item(request: TradeRequest, container: Container):
+    container.resources.settle(request.player_id, interrupt_sleep=True)
     profile = container.economy.sell(request.player_id, request.item_type, request.item_id)
     return _profile_or_snapshot(container, request.thread_id, profile.model_dump(mode="json"))
 
 
 @router.post("/use-item")
 def use_item(request: UseItemRequest, container: Container):
+    container.resources.settle(request.player_id, interrupt_sleep=True)
     profile, outcome = container.items.use_outside_combat(request.player_id, request.item_id)
     return {
         "status": "success",
@@ -100,6 +106,7 @@ def use_item(request: UseItemRequest, container: Container):
 
 @router.post("/craft")
 def craft_item(request: CraftRequest, container: Container):
+    container.resources.settle(request.player_id, interrupt_sleep=True)
     attempt = container.crafting.craft(
         request.player_id,
         ItemReference(item_type=request.item1_type, item_id=request.item1_id),

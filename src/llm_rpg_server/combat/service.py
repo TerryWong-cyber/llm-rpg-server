@@ -7,7 +7,7 @@ from typing import Any
 from llm_rpg_server.catalog import Catalog
 from llm_rpg_server.monsters import MonsterCatalog, MonsterDefinition
 from llm_rpg_server.npcs import NPCInteractionService
-from llm_rpg_server.players import GrowthService, PlayerRepository
+from llm_rpg_server.players import GrowthService, PlayerRepository, ResourceLifecycleService
 from llm_rpg_server.players.models import PersistentCombatStatus
 from llm_rpg_server.shared.config import ContentProvider
 from llm_rpg_server.shared.observability import Observability
@@ -28,6 +28,7 @@ class CombatSessionService:
         observability: Observability,
         growth: GrowthService,
         monsters: MonsterCatalog | None = None,
+        resources: ResourceLifecycleService | None = None,
     ):
         self.engine = engine
         self.rooms = rooms
@@ -38,6 +39,7 @@ class CombatSessionService:
         self.observability = observability
         self.growth = growth
         self.monsters = monsters
+        self.resources = resources
 
     def create_room(self, player_id: str) -> GameRoom:
         self._require_combat_ready(player_id)
@@ -569,7 +571,10 @@ class CombatSessionService:
             profile.combat_statuses = [PersistentCombatStatus.model_validate(item) for item in statuses]
 
     def _require_combat_ready(self, player_id: str) -> None:
-        profile = self.players.get(player_id)
+        profile = (
+            self.resources.settle(player_id, interrupt_sleep=True)
+            if self.resources is not None else self.players.get(player_id)
+        )
         if profile.current_hp <= 0:
             raise ValueError(self.content.text("errors.room.incapacitated"))
         if (

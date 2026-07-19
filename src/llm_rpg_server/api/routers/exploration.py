@@ -133,6 +133,7 @@ def rest_at_inn(request: PlayerRequest, container: Container):
 
 @router.post("/event-action")
 def event_action(request: EventActionRequest, container: Container):
+    container.resources.settle(request.player_id, interrupt_sleep=True)
     outcome = container.world_events.perform(
         request.player_id,
         request.event_id,
@@ -154,6 +155,16 @@ def event_action(request: EventActionRequest, container: Container):
     return response
 
 
+@router.post("/wake")
+def wake(request: PlayerRequest, container: Container):
+    profile = container.exploration.interrupt_sleep(request.player_id)
+    current = MapInstance.model_validate(profile.current_map)
+    response = _map_response(container, request.player_id, current, None)
+    response["status"] = "success"
+    response["profile"] = profile.model_dump(mode="json")
+    return response
+
+
 def _map_response(
     container: AppContainer,
     player_id: str,
@@ -162,7 +173,7 @@ def _map_response(
     *,
     transition=None,
 ):
-    profile = container.players.get(player_id)
+    profile = container.exploration.settle_resources(player_id)
     cells = []
     for cell in current.cells:
         payload = cell.model_dump(mode="json")
@@ -187,6 +198,7 @@ def _map_response(
             "combat_statuses": [item.model_dump(mode="json") for item in profile.combat_statuses],
             "inventory_items": profile.inventory.items,
             "last_camped_game_day": profile.last_camped_game_day,
+            "sleep": profile.sleep.model_dump(mode="json") if profile.sleep else None,
             "progression": container.growth.public_progress(profile),
             "active_quests": {
                 key: value.model_dump(mode="json")

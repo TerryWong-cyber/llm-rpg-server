@@ -17,7 +17,13 @@ from llm_rpg_server.items import ItemService
 from llm_rpg_server.monsters import MonsterCatalog
 from llm_rpg_server.npcs import InMemoryWorldRepository, NPCDialogueService, NPCInteractionService
 from llm_rpg_server.npcs.loader import seed_npcs
-from llm_rpg_server.players import EconomyService, GrowthService, InMemoryPlayerRepository, PlayerService
+from llm_rpg_server.players import (
+    EconomyService,
+    GrowthService,
+    InMemoryPlayerRepository,
+    PlayerService,
+    ResourceLifecycleService,
+)
 from llm_rpg_server.shared.config import LocalContentProvider, Settings
 from llm_rpg_server.shared.llm import create_llm
 from llm_rpg_server.shared.observability import Observability
@@ -38,6 +44,7 @@ class AppContainer:
     world_repository: InMemoryWorldRepository
     npc_interactions: NPCInteractionService
     exploration: ExplorationService
+    resources: ResourceLifecycleService
     encounters: EncounterService
     monsters: MonsterCatalog
     world_events: WorldEventCoordinator
@@ -63,9 +70,12 @@ def build_container() -> AppContainer:
     world_repository = InMemoryWorldRepository()
     seed_npcs(world_repository, content)
     npc_dialogue = NPCDialogueService(content, llm)
-    npc_interactions = NPCInteractionService(world_repository, npc_dialogue, content)
+    npc_interactions = NPCInteractionService(world_repository, npc_dialogue, content, players)
     npc_interactions.set_story_hook_listener(growth.start_quest)
     exploration = ExplorationService(players, catalog, content)
+    growth.set_clock(exploration.clock)
+    resources = ResourceLifecycleService(players, exploration.clock)
+    exploration.set_resource_lifecycle(resources)
     monsters = MonsterCatalog(content, catalog)
     encounters = EncounterService(content, npc_interactions, clock=exploration.clock)
     exploration.set_encounter_resolver(encounters)
@@ -100,6 +110,7 @@ def build_container() -> AppContainer:
         observability,
         growth,
         monsters,
+        resources,
     )
     world_events = WorldEventCoordinator(exploration, npc_interactions, monsters, combat, items)
     exploration.set_event_participant_resolver(world_events)
@@ -115,6 +126,7 @@ def build_container() -> AppContainer:
         world_repository=world_repository,
         npc_interactions=npc_interactions,
         exploration=exploration,
+        resources=resources,
         encounters=encounters,
         monsters=monsters,
         world_events=world_events,
