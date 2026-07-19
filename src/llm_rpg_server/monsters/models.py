@@ -49,6 +49,7 @@ class MonsterDefinition(BaseModel):
     title: str
     description: str
     emoji: str = "☠"
+    rank: Literal["normal", "elite", "boss"] = "normal"
     image_url: str | None = None
     habitats: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)

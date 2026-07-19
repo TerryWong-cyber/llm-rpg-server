@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "max_combat_slots": 5,
+  "skills": {
+    "skill.power_strike": {
+      "id": "skill.power_strike", "name": "奋力斩击", "description": "集中力量发动一次可靠的重击。", "type": "damage",
+      "icon_url": "/assets/vendor/game-icons/lorc/crossed-swords.svg", "rarity": "common", "use_contexts": ["combat"], "tags": ["martial", "physical"],
+      "costs": {"mp": 8}, "effect_range": "single",
+      "effects": [{"kind": "damage", "target": "enemy", "damage_type": "physical", "fixed_amount": 4, "attribute_scaling": {"strength": 0.8}, "weapon_multiplier": 1.15}]
+    },
+    "skill.fireball": {
+      "id": "skill.fireball", "name": "爆裂火球", "description": "凝聚火焰轰击目标，并可能留下持续燃烧的灼痕。", "type": "damage",
+      "icon_url": "/assets/vendor/game-icons/lorc/fire-bomb.svg", "rarity": "uncommon", "use_contexts": ["combat", "world_event"], "tags": ["spell", "fire", "light_source"],
+      "costs": {"mp": 20}, "effect_range": "single", "learning_conditions": {"minimum_level": 2, "minimum_attributes": {"wisdom": 6}},
+      "effects": [{"kind": "damage", "target": "enemy", "damage_type": "elemental", "element": "fire", "fixed_amount": 8, "attribute_scaling": {"wisdom": 1.2}}, {"kind": "apply_status", "target": "enemy", "status_id": "burn", "chance": 0.65, "duration_turns": 3}]
+    },
+    "skill.healing_light": {
+      "id": "skill.healing_light", "name": "治愈之光", "description": "以温和魔力修复伤势，回复固定生命并获得智慧加成。", "type": "healing",
+      "icon_url": "/assets/vendor/game-icons/lorc/round-bottom-flask.svg", "rarity": "uncommon", "use_contexts": ["combat", "exploration"], "tags": ["spell", "healing", "holy"],
+      "costs": {"mp": 16}, "effect_range": "self", "learning_conditions": {"minimum_level": 2, "minimum_attributes": {"wisdom": 6}},
+      "effects": [{"kind": "heal", "target": "self", "fixed_amount": 12, "attribute_scaling": {"wisdom": 1.1}}]
+    },
+    "skill.arcane_guard": {
+      "id": "skill.arcane_guard", "name": "奥术护盾", "description": "用奥术屏障抵消来袭伤害，并短暂提升防护。", "type": "defense",
+      "icon_url": "/assets/vendor/game-icons/delapouite/tribal-shield.svg", "rarity": "uncommon", "use_contexts": ["combat"], "tags": ["spell", "shield", "buff"],
+      "costs": {"mp": 14}, "effect_range": "self", "learning_conditions": {"minimum_level": 2, "minimum_attributes": {"wisdom": 6}},
+      "effects": [{"kind": "shield", "target": "self", "fixed_amount": 10, "attribute_scaling": {"wisdom": 0.8}}, {"kind": "apply_status", "target": "self", "status_id": "arcane_guard", "chance": 1, "duration_turns": 2}]
+    },
+    "skill.taunt": {
+      "id": "skill.taunt", "name": "挑衅", "description": "以压迫姿态扰乱对手，使其攻击节奏失衡。", "type": "control",
+      "icon_url": "/assets/vendor/game-icons/delapouite/barbarian.svg", "rarity": "common", "use_contexts": ["combat"], "tags": ["martial", "control", "fear"],
+      "costs": {"mp": 10}, "effect_range": "single", "learning_conditions": {"minimum_level": 2, "minimum_attributes": {"vitality": 6}},
+      "effects": [{"kind": "apply_status", "target": "enemy", "status_id": "fear", "chance": 0.55, "duration_turns": 2}]
+    },
+    "skill.entangling_roots": {
+      "id": "skill.entangling_roots", "name": "缠绕根须", "description": "催生根须束缚目标，并造成少量自然伤害。", "type": "control",
+      "icon_url": "/assets/vendor/game-icons/delapouite/circle-forest.svg", "rarity": "rare", "use_contexts": ["combat", "world_event"], "tags": ["spell", "nature", "root"],
+      "costs": {"mp": 18}, "effect_range": "single", "learning_conditions": {"minimum_level": 3, "minimum_attributes": {"wisdom": 7}},
+      "effects": [{"kind": "damage", "target": "enemy", "damage_type": "elemental", "element": "nature", "fixed_amount": 4, "attribute_scaling": {"wisdom": 0.6}}, {"kind": "apply_status", "target": "enemy", "status_id": "root", "chance": 0.75, "duration_turns": 2}]
+    },
+    "skill.lockpicking": {
+      "id": "skill.lockpicking", "name": "开锁术", "description": "辨认锁芯结构并以灵巧手法打开普通机械锁。", "type": "utility",
+      "icon_url": "/assets/vendor/game-icons/lorc/rune-stone.svg", "rarity": "uncommon", "use_contexts": ["world_event"], "tags": ["utility", "unlock", "mechanical"],
+      "costs": {"mp": 6}, "effect_range": "event", "learning_conditions": {"minimum_level": 2, "minimum_attributes": {"agility": 6}},
+      "effects": [{"kind": "event_capability", "target": "event", "capability": "unlock"}]
+    },
+    "skill.flight": {
+      "id": "skill.flight", "name": "飞行术", "description": "以魔力托起身体，获得持续 90 秒的飞行状态。", "type": "utility",
+      "icon_url": "/assets/vendor/game-icons/lorc/feather.svg", "rarity": "rare", "use_contexts": ["exploration", "world_event"], "tags": ["spell", "movement", "flight"],
+      "costs": {"mp": 24}, "effect_range": "self", "learning_conditions": {"minimum_level": 4, "minimum_attributes": {"wisdom": 8}},
+      "effects": [{"kind": "grant_exploration_state", "target": "self", "state_id": "flying", "duration_seconds": 90, "capability": "flight"}]
+    },
+    "skill.moonstep": {
+      "id": "skill.moonstep", "name": "月影步", "description": "月桂精灵借微光折射身形，造成奥术伤害并提高闪避。", "type": "buff",
+      "icon_url": "/assets/vendor/game-icons/lorc/snowflake-2.svg", "rarity": "rare", "use_contexts": ["combat"], "tags": ["race", "arcane", "evasion"],
+      "costs": {"mp": 14}, "effect_range": "self", "learning_conditions": {"race_ids": ["3"], "minimum_level": 3},
+      "effects": [{"kind": "apply_status", "target": "self", "status_id": "moonstep", "chance": 1, "duration_turns": 3}]
+    },
+    "skill.dragon_breath": {
+      "id": "skill.dragon_breath", "name": "龙息", "description": "龙裔释放血脉中的炽热吐息，对区域敌人造成火焰伤害。", "type": "damage",
+      "icon_url": "/assets/vendor/game-icons/lorc/fire-bomb.svg", "rarity": "rare", "use_contexts": ["combat", "world_event"], "tags": ["race", "fire", "area"],
+      "costs": {"mp": 12}, "effect_range": "area", "learning_conditions": {"race_ids": ["6"], "minimum_level": 3},
+      "effects": [{"kind": "damage", "target": "all_enemies", "damage_type": "elemental", "element": "fire", "fixed_amount": 10, "attribute_scaling": {"vitality": 0.7, "strength": 0.5}}, {"kind": "apply_status", "target": "enemy", "status_id": "burn", "chance": 0.5, "duration_turns": 2}]
+    }
+  },
+  "unlocks": [
+    {"skill_id": "skill.power_strike", "source": "starter", "level": 1},
+    {"skill_id": "skill.moonstep", "source": "race_level", "race_ids": ["3"], "level": 3},
+    {"skill_id": "skill.dragon_breath", "source": "race_level", "race_ids": ["6"], "level": 3}
+  ],
+  "trainers": {
+    "hadrik_reeve": [
+      {"skill_id": "skill.taunt", "gold_cost": 45},
+      {"skill_id": "skill.lockpicking", "gold_cost": 70}
+    ],
+    "seren_gravewarden": [
+      {"skill_id": "skill.healing_light", "gold_cost": 80},
+      {"skill_id": "skill.arcane_guard", "gold_cost": 90}
+    ]
+  },
+  "world_events": [
+    {
+      "event_id": "event.ruin.locked_courtyard", "kind": "discovery", "title": "上锁的遗迹院门",
+      "description": "生锈门锁仍咬住厚重铁链，门墙上方却没有完整顶棚。", "emoji": "🔒",
+      "trigger": "on_enter_cell", "terrain_ids": ["12"], "chance": 0.35, "priority": 92,
+      "trigger_scope": "cell", "cooldown_days": 1, "max_triggers": 1, "persistence": "until_resolved",
+      "actions": [
+        {"action_id": "unlock_with_skill", "label": "释放开锁术", "style": "primary", "kind": "use_skill", "skill_requirements": {"skill_ids": ["skill.lockpicking"], "any_tags": ["unlock"]}, "resolution": "end_event", "result_title": "锁芯弹开", "result_description": "细小的簧片依次归位，铁链从门环上滑落。"},
+        {"action_id": "fly_over_gate", "label": "从院门上方飞过", "style": "primary", "kind": "narrative", "state_requirements": ["flying"], "resolution": "end_event", "result_title": "越过高墙", "result_description": "仍在生效的飞行术托起身体，你从断墙上方轻巧掠过。"},
+        {"action_id": "leave_gate", "label": "暂时离开", "style": "quiet", "kind": "narrative", "resolution": "keep_active", "result_title": "院门仍然紧锁", "result_description": "你记住了门锁结构与断墙高度，准备充分后还可以回来。"}
+      ]
+    }
+  ]
+}

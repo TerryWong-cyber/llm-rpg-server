@@ -62,7 +62,7 @@ class EffectivenessJudge:
                 reason="行动者受到昏迷等强制控制，无法完成招式。",
                 factors=["强制控制"],
             )
-        if target_action.get("type") == "defense" and action.get("type") in {"attack", "skill"}:
+        if target_action.get("type") == "defense" and action.get("type") in {"attack", "skill", "skill_v2"}:
             return EffectivenessAssessment(score=2, reason="攻击被对手的战术防御显著削弱。", factors=["战术防御"])
         return EffectivenessAssessment()
 

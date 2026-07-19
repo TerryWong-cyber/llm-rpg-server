@@ -12,6 +12,7 @@ from langgraph.graph import END, StateGraph
 from llm_rpg_server.catalog import Catalog
 from llm_rpg_server.players import GrowthService, PlayerRepository, PlayerService
 from llm_rpg_server.shared.config import ContentProvider
+from llm_rpg_server.skills import SkillService
 
 from .adjudication import EffectivenessJudge
 from .hazards import EnvironmentHazardService
@@ -29,6 +30,7 @@ class CombatEngine:
         growth: GrowthService,
         content: ContentProvider,
         llm: Any,
+        skills: SkillService,
         world_clock: Any | None = None,
     ):
         self.catalog = catalog
@@ -37,6 +39,7 @@ class CombatEngine:
         self.growth = growth
         self.content = content
         self.llm = llm
+        self.skills = skills
         self.world_clock = world_clock
         self.rules = CombatRulebook(content)
         self.hazards = EnvironmentHazardService(self.rules, content, llm)
@@ -84,6 +87,7 @@ class CombatEngine:
             "player_class": player_class,
             "player_race": player_race,
             "player_race_skills": list(player_race.get("exclusive_skills", [])),
+            "player_skills": self.skills.combat_skills(profile),
             "player_hp": profile.current_hp,
             "player_mp": profile.current_mp,
             "player_stamina": profile.stamina,
@@ -104,6 +108,7 @@ class CombatEngine:
                 "ai_class": ai_class,
                 "ai_race": None,
                 "ai_race_skills": [],
+                "ai_skills": [],
                 "ai_weapon": weapon,
                 "ai_armor": armor,
                 "ai_item": self.catalog.items[ai_item_id],
@@ -130,13 +135,13 @@ class CombatEngine:
             action = self.action_from_key(
                 str(skill["id"]),
                 state["ai_weapon"],
-                state.get("ai_race_skills", []),
+                None,
             )
             if state["ai_mp"] >= action["mp_cost"] and state["ai_stamina"] >= action["stamina_cost"]:
                 available.append(action)
         if available and random.random() > 0.3:
             return {"ai_action": random.choice(available)}
-        return {"ai_action": self.action_from_key("0", state["ai_weapon"], state.get("ai_race_skills", []))}
+        return {"ai_action": self.action_from_key("0", state["ai_weapon"], None)}
 
     def _judge(self, state: GameState, config: RunnableConfig) -> dict[str, Any]:
         judgement = self.effectiveness.evaluate(state, config)
@@ -175,25 +180,27 @@ class CombatEngine:
             opponent_statuses = [item for item in opponent_statuses if "negative" not in item.get("tags", [])]
         environment_tags = state.get("environment_context", {}).get("tags", [])
         if player_outcome.damage.hit:
-            opponent_statuses = self.rules.apply_status(
-                opponent_statuses,
-                state["player_action"].get("status_effect"),
-                state["player_id"],
-                opponent_stats,
-                player_rng,
-                environment_tags,
-                state["player_action"].get("status_chance"),
-            )
+            if state["player_action"].get("status_target") == "self":
+                player_statuses = self.rules.apply_status(
+                    player_statuses, state["player_action"].get("status_effect"), state["player_id"],
+                    player_stats, player_rng, environment_tags, state["player_action"].get("status_chance"),
+                )
+            else:
+                opponent_statuses = self.rules.apply_status(
+                    opponent_statuses, state["player_action"].get("status_effect"), state["player_id"],
+                    opponent_stats, player_rng, environment_tags, state["player_action"].get("status_chance"),
+                )
         if opponent_outcome.damage.hit:
-            player_statuses = self.rules.apply_status(
-                player_statuses,
-                state["ai_action"].get("status_effect"),
-                state.get("p2_id", "opponent"),
-                player_stats,
-                opponent_rng,
-                environment_tags,
-                state["ai_action"].get("status_chance"),
-            )
+            if state["ai_action"].get("status_target") == "self":
+                opponent_statuses = self.rules.apply_status(
+                    opponent_statuses, state["ai_action"].get("status_effect"), state.get("p2_id", "opponent"),
+                    opponent_stats, opponent_rng, environment_tags, state["ai_action"].get("status_chance"),
+                )
+            else:
+                player_statuses = self.rules.apply_status(
+                    player_statuses, state["ai_action"].get("status_effect"), state.get("p2_id", "opponent"),
+                    player_stats, opponent_rng, environment_tags, state["ai_action"].get("status_chance"),
+                )
 
         player_exposure, player_statuses, player_environment_damage = self.rules.environment_tick(
             state.get("environment_context", {}),
@@ -321,6 +328,7 @@ class CombatEngine:
         if self.rules.is_incapacitated(state.get(f"{actor}_statuses", [])):
             return ActionOutcome()
         outcome = ActionOutcome(
+            hp_restore=-int(action.get("hp_cost", 0)),
             mp_delta=-int(action.get("mp_cost", 0)),
             stamina_delta=-int(action.get("stamina_cost", 0)),
         )
@@ -338,6 +346,15 @@ class CombatEngine:
                     packet, actor_stats, target_stats, assessment.score, rng, can_miss=True, can_crit=False
                 )
             outcome.clear_negative_statuses = bool(item.get("clear_negative_statuses", False))
+        elif action["type"] == "skill_v2":
+            packet = self._skill_damage_packet(action, state[f"{actor}_weapon"], actor_stats)
+            if any((packet.physical, packet.magical, packet.elemental, packet.true)):
+                outcome.damage = self.rules.resolve_damage(
+                    packet, actor_stats, target_stats, assessment.score, rng
+                )
+            for effect in action.get("effects", []):
+                if effect.get("kind") == "heal" and effect.get("target") == "self":
+                    outcome.hp_restore += int(self._scaled_effect_amount(effect, actor_stats))
         elif action["type"] in {"attack", "skill"}:
             packet = self.rules.attack_packet(
                 state[f"{actor}_weapon"], actor_stats, float(action.get("multiplier", 1))
@@ -355,6 +372,44 @@ class CombatEngine:
             if passive_ratio > 0:
                 outcome.hp_restore += int(outcome.damage.total * passive_ratio)
         return outcome
+
+    def _skill_damage_packet(
+        self,
+        action: dict[str, Any],
+        weapon: dict[str, Any],
+        actor_stats: DerivedStats,
+    ) -> DamagePacket:
+        packet = DamagePacket()
+        for effect in action.get("effects", []):
+            if effect.get("kind") != "damage":
+                continue
+            amount = self._scaled_effect_amount(effect, actor_stats)
+            weapon_multiplier = float(effect.get("weapon_multiplier", 0))
+            if weapon_multiplier:
+                weapon_packet = self.rules.attack_packet(weapon, actor_stats, weapon_multiplier)
+                packet.physical += weapon_packet.physical
+                packet.magical += weapon_packet.magical
+                packet.true += weapon_packet.true
+                for element, value in weapon_packet.elemental.items():
+                    packet.elemental[element] = packet.elemental.get(element, 0) + value
+            damage_type = effect.get("damage_type")
+            if damage_type == "physical":
+                packet.physical += amount
+            elif damage_type == "magical":
+                packet.magical += amount
+            elif damage_type == "true":
+                packet.true += amount
+            elif damage_type == "elemental":
+                element = str(effect.get("element") or "arcane")
+                packet.elemental[element] = packet.elemental.get(element, 0) + amount
+        return packet
+
+    @staticmethod
+    def _scaled_effect_amount(effect: dict[str, Any], stats: DerivedStats) -> float:
+        amount = float(effect.get("fixed_amount", 0))
+        for attribute, coefficient in effect.get("attribute_scaling", {}).items():
+            amount += float(getattr(stats, attribute, 0)) * float(coefficient)
+        return max(0, amount)
 
     def _settlement(self, state: GameState, config: RunnableConfig) -> dict[str, Any]:
         if state["player_hp"] <= 0 and state["ai_hp"] <= 0:
@@ -478,7 +533,7 @@ class CombatEngine:
         self,
         key: str,
         weapon: dict[str, Any],
-        race_skills: list[dict[str, Any]] | None = None,
+        equipped_skills: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         if key == "0":
             return {
@@ -511,16 +566,37 @@ class CombatEngine:
                 "stamina_cost": 0,
                 "type": "item",
             }
+        candidates = weapon.get("skills", []) if equipped_skills is None else equipped_skills
         skill = next(
             (
                 item
-                for item in [*weapon.get("skills", []), *(race_skills or [])]
+                for item in candidates
                 if str(item["id"]) == str(key)
             ),
             None,
         )
         if skill is None:
             raise ValueError(self.content.text("errors.room.invalid_action"))
+        if "effects" in skill:
+            costs = skill.get("costs", {})
+            status_effect = next(
+                (effect for effect in skill.get("effects", []) if effect.get("kind") == "apply_status"),
+                None,
+            )
+            return {
+                "id": str(skill["id"]),
+                "name": self.content.text("combat.action.skill", skill_name=skill["name"]),
+                "description": skill.get("description", ""),
+                "cost": int(costs.get("mp", costs.get("stamina", 0))),
+                "mp_cost": int(costs.get("mp", 0)),
+                "stamina_cost": int(costs.get("stamina", 0)),
+                "hp_cost": int(costs.get("hp", 0)),
+                "type": "skill_v2",
+                "effects": list(skill.get("effects", [])),
+                "status_effect": status_effect.get("status_id") if status_effect else None,
+                "status_chance": status_effect.get("chance") if status_effect else None,
+                "status_target": status_effect.get("target") if status_effect else None,
+            }
         legacy_cost = int(skill.get("cost", 0))
         return {
             "id": str(skill["id"]),

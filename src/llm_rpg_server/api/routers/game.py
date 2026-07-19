@@ -11,6 +11,10 @@ from llm_rpg_server.api.schemas import (
     CreateCharacterRequest,
     EquipmentRequest,
     QuestCompleteRequest,
+    SkillBookRequest,
+    SkillCastRequest,
+    SkillEquipRequest,
+    TrainerLearnRequest,
     TradeRequest,
     UseItemRequest,
 )
@@ -23,13 +27,20 @@ Container = Annotated[AppContainer, Depends(container_from_request)]
 
 @router.get("/meta")
 def game_meta(container: Container):
-    return container.catalog.public_view()
+    return {**container.catalog.public_view(), "skills": container.skill_catalog.public_view()}
 
 
 @router.post("/character/create")
 def create_character(request: CreateCharacterRequest, container: Container):
     profile = container.player_service.create(request.name, request.race_id)
+    profile = container.skills.sync_unlocks(profile.player_id)
     return {"status": "success", "player_id": profile.player_id, "profile": profile.model_dump(mode="json")}
+
+
+@router.get("/character/profile")
+def character_profile(player_id: str, container: Container):
+    profile = container.resources.settle(player_id)
+    return {"status": "success", "profile": profile.model_dump(mode="json")}
 
 
 @router.post("/character/allocate")
@@ -41,6 +52,35 @@ def allocate_attributes(request: AttributeAllocationRequest, container: Containe
         "profile": profile.model_dump(mode="json"),
         "progression": container.growth.public_progress(profile),
     }
+
+
+@router.post("/skills/equip")
+def equip_skills(request: SkillEquipRequest, container: Container):
+    profile = container.skills.equip(request.player_id, request.skill_ids)
+    return {"status": "success", "profile": profile.model_dump(mode="json")}
+
+
+@router.post("/skills/learn-book")
+def learn_skill_book(request: SkillBookRequest, container: Container):
+    profile, skill_id = container.skills.learn_from_book(request.player_id, request.item_id)
+    return {"status": "success", "profile": profile.model_dump(mode="json"), "skill_id": skill_id}
+
+
+@router.post("/skills/cast-exploration")
+def cast_exploration_skill(request: SkillCastRequest, container: Container):
+    profile, outcome = container.skills.cast_exploration(request.player_id, request.skill_id)
+    return {"status": "success", "profile": profile.model_dump(mode="json"), "outcome": outcome}
+
+
+@router.get("/skills/trainer/{npc_id}")
+def trainer_skills(npc_id: str, player_id: str, container: Container):
+    return {"npc_id": npc_id, "offers": container.skills.trainer_view(player_id, npc_id)}
+
+
+@router.post("/skills/learn-trainer")
+def learn_trainer_skill(request: TrainerLearnRequest, container: Container):
+    profile = container.skills.learn_from_trainer(request.player_id, request.npc_id, request.skill_id)
+    return {"status": "success", "profile": profile.model_dump(mode="json")}
 
 
 @router.post("/character/equipment")

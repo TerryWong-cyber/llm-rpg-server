@@ -460,6 +460,34 @@
       "tags": ["consumable", "food", "berry", "foraged"],
       "desc": "酸甜多汁的林间莓果。恢复 4 点生命与 15 点精力，并获得短暂的饱食增益。",
       "image_url": "/assets/vendor/game-icons/delapouite/berry-bush.svg"
+    },
+    "11": {
+      "id": 11, "name": "《爆裂火球》技能书", "type": "learn_skill", "val": 0, "value": 120,
+      "use_contexts": [], "tradable": true, "can_be_ingredient": false, "category": "skill_book",
+      "tags": ["skill_book", "spell", "fire"], "learn_skill_id": "skill.fireball",
+      "desc": "记载爆裂火球构型的施法手册。研读后消耗并习得技能。",
+      "image_url": "/assets/vendor/game-icons/lorc/rune-stone.svg"
+    },
+    "12": {
+      "id": 12, "name": "《治愈之光》技能书", "type": "learn_skill", "val": 0, "value": 110,
+      "use_contexts": [], "tradable": true, "can_be_ingredient": false, "category": "skill_book",
+      "tags": ["skill_book", "spell", "healing"], "learn_skill_id": "skill.healing_light",
+      "desc": "以柔和魔力修复创伤的入门典籍。研读后消耗并习得技能。",
+      "image_url": "/assets/vendor/game-icons/lorc/rune-stone.svg"
+    },
+    "13": {
+      "id": 13, "name": "《精密开锁》技能书", "type": "learn_skill", "val": 0, "value": 95,
+      "use_contexts": [], "tradable": true, "can_be_ingredient": false, "category": "skill_book",
+      "tags": ["skill_book", "utility", "unlock"], "learn_skill_id": "skill.lockpicking",
+      "desc": "图解常见锁芯与无损开启技巧。研读后消耗并习得技能。",
+      "image_url": "/assets/vendor/game-icons/lorc/rune-stone.svg"
+    },
+    "14": {
+      "id": 14, "name": "《初等飞行术》技能书", "type": "learn_skill", "val": 0, "value": 180,
+      "use_contexts": [], "tradable": true, "can_be_ingredient": false, "category": "skill_book",
+      "tags": ["skill_book", "spell", "flight"], "learn_skill_id": "skill.flight",
+      "desc": "讲解浮空与方向控制的稀有法术书。研读后消耗并习得技能。",
+      "image_url": "/assets/vendor/game-icons/lorc/rune-stone.svg"
     }
   },
   "resources": {

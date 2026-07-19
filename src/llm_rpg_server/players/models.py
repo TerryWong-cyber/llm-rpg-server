@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -73,6 +73,7 @@ class QuestProgress(BaseModel):
     title: str
     summary: str
     xp_reward: int = Field(ge=0)
+    skill_rewards: list[str] = Field(default_factory=list)
     requirements: list[dict[str, Any]] = Field(default_factory=list)
     related_npc_ids: list[str] = Field(default_factory=list)
     status: Literal["active", "completed"] = "active"
@@ -91,11 +92,44 @@ class SleepState(BaseModel):
     location_kind: Literal["camp", "inn"]
 
 
+class LearnedSkill(BaseModel):
+    skill_id: str
+    source: Literal["starter", "skill_book", "npc", "race_level", "quest", "admin"]
+    source_id: str | None = None
+    learned_at: datetime
+
+
+class ExplorationSkillEffect(BaseModel):
+    state_id: str
+    name: str
+    source_skill_id: str
+    started_at: datetime
+    expires_at: datetime
+    capabilities: list[str] = Field(default_factory=list)
+
+
+class CharacterChronicleEntry(BaseModel):
+    entry_id: str
+    category: Literal["origin", "growth", "skill", "quest", "exploration", "combat"]
+    title: str
+    description: str
+    emoji: str = "✦"
+    source_id: str | None = None
+    game_hour: int | None = Field(default=None, ge=0)
+    year: int | None = Field(default=None, ge=0)
+    month: int | None = Field(default=None, ge=1, le=12)
+    day: int | None = Field(default=None, ge=1)
+    hour: int | None = Field(default=None, ge=0, le=23)
+    occurred_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
 class PlayerProfile(BaseModel):
     player_id: str
     name: str
     character_id: str
     race_id: str = "1"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     level: int = Field(default=1, ge=1)
     experience: int = Field(default=0, ge=0)
     experience_to_next: int = Field(default=100, gt=0)
@@ -124,6 +158,10 @@ class PlayerProfile(BaseModel):
     last_camped_game_day: int | None = None
     last_stamina_recovery_game_hour: int | None = None
     sleep: SleepState | None = None
+    learned_skills: dict[str, LearnedSkill] = Field(default_factory=dict)
+    equipped_skill_ids: list[str] = Field(default_factory=list)
+    exploration_effects: list[ExplorationSkillEffect] = Field(default_factory=list)
+    chronicle: list[CharacterChronicleEntry] = Field(default_factory=list)
     encountered_npc_ids: list[str] = Field(default_factory=list)
     world_event_states: dict[str, WorldEventState] = Field(default_factory=dict)
     world_event_log: list[WorldEventLogEntry] = Field(default_factory=list)

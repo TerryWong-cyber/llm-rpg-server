@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import random
-from typing import Any, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 from llm_rpg_server.catalog import Catalog
 from llm_rpg_server.players import PlayerRepository
@@ -21,6 +21,9 @@ from .models import (
     MapTransition,
     WorldEventResult,
 )
+
+if TYPE_CHECKING:
+    from llm_rpg_server.players.chronicle import CharacterChronicleService
 
 Direction = Literal["up", "down", "left", "right"]
 
@@ -75,6 +78,7 @@ class ExplorationService:
         }
         self._latest_events: dict[str, WorldEventResult | None] = {}
         self.event_participant_resolver: EventParticipantResolver | None = None
+        self.chronicle: CharacterChronicleService | None = None
         self.resources: ResourceLifecycleService | None = ResourceLifecycleService(players, self.clock)
         self._validate_configuration()
 
@@ -95,6 +99,17 @@ class ExplorationService:
 
     def set_event_participant_resolver(self, resolver: EventParticipantResolver) -> None:
         self.event_participant_resolver = resolver
+
+    def set_chronicle(self, chronicle: CharacterChronicleService) -> None:
+        self.chronicle = chronicle
+
+    def add_event_rules(self, rules: list[dict[str, Any]]) -> None:
+        existing = {rule["event_id"] for rule in self.event_rules}
+        duplicates = existing.intersection(rule["event_id"] for rule in rules)
+        if duplicates:
+            raise ValueError(f"Duplicate world event ids: {sorted(duplicates)}")
+        self.event_rules.extend(rules)
+        self._validate_configuration()
 
     def list_templates(self) -> list[dict[str, Any]]:
         return [template.model_dump(mode="json") for template in self.templates.values()]
@@ -909,8 +924,8 @@ class ExplorationService:
         ):
             raise ValueError(self.content.text("errors.map.event_blocks_movement"))
 
-    @staticmethod
     def _append_event_log(
+        self,
         profile: PlayerProfile,
         current: MapInstance,
         cell: MapCell,
@@ -920,7 +935,7 @@ class ExplorationService:
         title: str,
         description: str,
     ) -> None:
-        profile.world_event_log.append(WorldEventLogEntry(
+        entry = WorldEventLogEntry(
             log_id=(
                 f"{rule['event_id']}:{phase}:{now.total_game_hours}:"
                 f"{current.map_id}:{cell.cell_id}:{len(profile.world_event_log)}"
@@ -941,9 +956,27 @@ class ExplorationService:
             day=now.day,
             hour=now.hour,
             season=now.season,
-        ))
+        )
+        profile.world_event_log.append(entry)
         if len(profile.world_event_log) > 200:
             del profile.world_event_log[:-200]
+        if self.chronicle is not None and phase in {"triggered", "action"}:
+            self.chronicle.record(
+                profile,
+                "exploration",
+                title,
+                description,
+                emoji=rule.get("emoji", "✦"),
+                source_id=entry.log_id,
+                details={
+                    "event_id": rule["event_id"],
+                    "phase": phase,
+                    "world_id": current.world_id,
+                    "region_id": current.region_id,
+                    "map_id": current.map_id,
+                    "cell_id": cell.cell_id,
+                },
+            )
 
     def _edge_entry(self, destination: MapInstance, direction: Direction, source: MapCell) -> MapCell:
         if direction == "right":
@@ -1137,7 +1170,7 @@ class ExplorationService:
                 if action.get("resolution", "keep_active") not in {"keep_active", "end_event"}:
                     raise ValueError(f"World event {event_id} action {action_id} has an invalid resolution")
                 if action.get("kind", "narrative") not in {
-                    "narrative", "open_npc", "start_quest", "npc_combat", "monster_combat", "use_item"
+                    "narrative", "open_npc", "start_quest", "npc_combat", "monster_combat", "use_item", "use_skill"
                 }:
                     raise ValueError(f"World event {event_id} action {action_id} has an invalid kind")
                 if action.get("kind") == "use_item":
@@ -1147,4 +1180,12 @@ class ExplorationService:
                     ):
                         raise ValueError(
                             f"World event {event_id} action {action_id} requires item matching rules"
+                        )
+                if action.get("kind") == "use_skill":
+                    requirements = action.get("skill_requirements")
+                    if not isinstance(requirements, dict) or not any(
+                        requirements.get(key) for key in ("skill_ids", "any_tags")
+                    ):
+                        raise ValueError(
+                            f"World event {event_id} action {action_id} requires skill matching rules"
                         )

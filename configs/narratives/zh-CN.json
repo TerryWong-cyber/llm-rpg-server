@@ -18,6 +18,31 @@
         "quest_requirements": "任务目标尚未全部完成",
         "quest_completed": "该任务奖励已经结算"
       },
+      "skill": {
+        "not_book": "这件物品不是可研读的技能书",
+        "already_learned_book": "该技能已经习得，技能书未被消耗",
+        "already_learned": "该技能已经习得",
+        "trainer_unknown": "这位 NPC 不教授该技能",
+        "trainer_not_met": "你尚未在旅途中遇见这位导师",
+        "trainer_gold": "需要 {gold} 金币",
+        "duplicate_loadout": "战斗技能配置中不能有重复技能",
+        "slot_limit": "最多携带 {slots} 个战斗技能",
+        "not_learned": "不能装备尚未习得的技能",
+        "not_learned_cast": "尚未习得该技能",
+        "not_combat": "该技能不能配置到战斗技能栏",
+        "not_exploration": "该技能不能在探索中释放",
+        "event_mismatch": "该技能无法解决当前事件",
+        "event_state_missing": "所需的角色状态已失效或尚未获得",
+        "event_skill_required": "请选择要释放的技能",
+        "race_condition": "种族条件不符",
+        "level_condition": "需要等级 {level}",
+        "attribute_condition": "{attribute} 需要达到 {minimum}",
+        "prerequisite_condition": "缺少前置技能",
+        "weapon_condition": "当前武器不满足释放条件",
+        "state_condition": "缺少所需角色状态",
+        "resource_condition": "{resource} 不足",
+        "hp_condition": "生命值不足，无法释放该技能"
+      },
       "room": {
         "not_found": "决斗房间无效或已解散",
         "full": "该房间已满员或已开战",
@@ -73,7 +98,7 @@
         "owned": "已经拥有该装备",
         "gold": "金币不足，无法购买",
         "not_in_settlement": "只有站在村庄或城镇地块时才能交易",
-        "closed": "商店已经打烊，请在白天或黄昏前来"
+        "closed": "商店已经打烊，营业时间为早上 6 点至午夜 12 点"
       },
       "craft": {
         "failed": "炼金流程执行失败",
@@ -131,6 +156,38 @@
         "armor_loot": "武装防具【{name}】",
         "item_loot": "炼金道具【{name}】×1"
       }
+    },
+    "chronicle": {
+      "origin_title": "旅途伊始",
+      "origin_description": "{name}作为{race_name}在{birthplace}踏上了旅途。",
+      "level_title": "成长至 {level} 级",
+      "level_description": "历练带来了新的领悟，等级由 {old_level} 提升至 {level}。",
+      "attributes_title": "重塑自身",
+      "attributes_description": "完成属性成长：{allocations}。",
+      "attribute_vitality": "体质",
+      "attribute_strength": "力量",
+      "attribute_agility": "敏捷",
+      "attribute_wisdom": "智慧",
+      "attribute_luck": "幸运",
+      "skill_title": "习得技能 · {skill_name}",
+      "skill_description": "通过{source}掌握了新的能力。",
+      "skill_source_starter": "初始训练",
+      "skill_source_skill_book": "研读技能书",
+      "skill_source_npc": "导师传授",
+      "skill_source_race_level": "种族血脉觉醒",
+      "skill_source_quest": "任务历练",
+      "skill_source_admin": "特殊机缘",
+      "quest_start_title": "接取任务 · {quest_title}",
+      "quest_start_description": "接受委托：{summary}",
+      "quest_complete_title": "完成任务 · {quest_title}",
+      "quest_complete_description": "完成委托并获得 {experience} 点经验。",
+      "combat_victory_title": "战斗胜利 · {opponent}",
+      "combat_victory_description": "在与{opponent}的交锋中取得了胜利。",
+      "combat_defeat_title": "战斗失利 · {opponent}",
+      "combat_defeat_description": "在与{opponent}的交锋中败退，但旅途仍将继续。",
+      "combat_draw_title": "两败俱伤 · {opponent}",
+      "combat_draw_description": "与{opponent}的战斗以平局收场。"
+      ,"combat_unknown_opponent": "未知对手"
     },
     "crafting": {
       "image_prompt": "A single icon of a fantasy RPG game item named '{name}'. Description: {description}. High quality 2D digital art, isolated on a solid dark background, suitable for inventory.",

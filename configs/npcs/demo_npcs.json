@@ -28,6 +28,7 @@
         "min_trust": 5,
         "requires_memory_tags": [],
         "xp_reward": 120,
+        "skill_rewards": ["skill.entangling_roots"],
         "requirements": [{"kind": "inventory", "description": "带回 2 份发光蘑菇", "item_type": "material", "item_id": "mat_3", "quantity": 2, "consume": true}]
       }],
       "combat_triggers": []

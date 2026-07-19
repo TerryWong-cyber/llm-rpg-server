@@ -7,10 +7,11 @@ from typing import Any
 from llm_rpg_server.catalog import Catalog
 from llm_rpg_server.monsters import MonsterCatalog, MonsterDefinition
 from llm_rpg_server.npcs import NPCInteractionService
-from llm_rpg_server.players import GrowthService, PlayerRepository, ResourceLifecycleService
+from llm_rpg_server.players import CharacterChronicleService, GrowthService, PlayerRepository, ResourceLifecycleService
 from llm_rpg_server.players.models import PersistentCombatStatus
 from llm_rpg_server.shared.config import ContentProvider
 from llm_rpg_server.shared.observability import Observability
+from llm_rpg_server.skills import SkillService
 
 from .engine import CombatEngine
 from .rooms import GameRoom, InMemoryRoomRepository
@@ -29,6 +30,8 @@ class CombatSessionService:
         growth: GrowthService,
         monsters: MonsterCatalog | None = None,
         resources: ResourceLifecycleService | None = None,
+        skills: SkillService | None = None,
+        chronicle: CharacterChronicleService | None = None,
     ):
         self.engine = engine
         self.rooms = rooms
@@ -40,6 +43,8 @@ class CombatSessionService:
         self.growth = growth
         self.monsters = monsters
         self.resources = resources
+        self.skills = skills
+        self.chronicle = chronicle
 
     def create_room(self, player_id: str) -> GameRoom:
         self._require_combat_ready(player_id)
@@ -261,7 +266,7 @@ class CombatSessionService:
         action = self.engine.action_from_key(
             action_key,
             values[f"{prefix}_weapon"],
-            values.get(f"{prefix}_race_skills", []),
+            values.get(f"{prefix}_skills", []),
         )
         self._validate_action(values, prefix, action)
         if is_p1:
@@ -275,14 +280,14 @@ class CombatSessionService:
         updates = {"player_action": self.engine.action_from_key(
             room.p1_act,
             values["player_weapon"],
-            values.get("player_race_skills", []),
+            values.get("player_skills", []),
         )}
         self._validate_action(values, "player", updates["player_action"])
         if room.mode == "PvP":
             updates["ai_action"] = self.engine.action_from_key(
                 room.p2_act,
                 values["ai_weapon"],
-                values.get("ai_race_skills", []),
+                values.get("ai_skills", []),
             )
             self._validate_action(values, "ai", updates["ai_action"])
         self.engine.app.update_state(config, updates)
@@ -368,6 +373,7 @@ class CombatSessionService:
                 "player_class": values.get("player_class"),
                 "player_race": values.get("player_race"),
                 "player_race_skills": values.get("player_race_skills", []),
+                "player_skills": values.get("player_skills", []),
                 "player_progression": self.growth.public_progress(player),
                 "player_weapon": values.get("player_weapon"),
                 "player_armor": values.get("player_armor"),
@@ -388,6 +394,7 @@ class CombatSessionService:
                 "ai_class": values.get("ai_class"),
                 "ai_race": values.get("ai_race"),
                 "ai_race_skills": values.get("ai_race_skills", []),
+                "ai_skills": values.get("ai_skills", []),
                 "ai_progression": self.growth.public_progress(opponent) if opponent else None,
                 "ai_weapon": values.get("ai_weapon"),
                 "ai_armor": values.get("ai_armor"),
@@ -464,6 +471,7 @@ class CombatSessionService:
             f"{prefix}_class": character,
             f"{prefix}_race": race,
             f"{prefix}_race_skills": list(race.get("exclusive_skills", [])),
+            f"{prefix}_skills": self.skills.combat_skills(profile) if self.skills else [],
             f"{prefix}_weapon": weapon,
             f"{prefix}_armor": armor,
             f"{prefix}_hp": profile.current_hp,
@@ -484,6 +492,8 @@ class CombatSessionService:
             raise ValueError(self.content.text("errors.room.insufficient_mp"))
         if action.get("stamina_cost", 0) > values[f"{prefix}_stamina"]:
             raise ValueError(self.content.text("errors.room.insufficient_stamina"))
+        if action.get("hp_cost", 0) >= values[f"{prefix}_hp"]:
+            raise ValueError(self.content.text("errors.skill.hp_condition"))
         if action["type"] == "item" and values.get(f"{prefix}_item_count", 0) <= 0:
             raise ValueError(self.content.text("errors.room.item_unavailable"))
 
@@ -536,7 +546,41 @@ class CombatSessionService:
                 )
                 if awarded and progress:
                     room.reward_summary = self._experience_summary(progress)
+        self._record_combat_chronicle(room, player_won)
         room.opponent_outcome_recorded = True
+
+    def _record_combat_chronicle(self, room: GameRoom, player_won: bool | None) -> None:
+        if self.chronicle is None:
+            return
+        if room.npc_id:
+            opponent_name = self.npc_interactions.repository.get_npc(room.npc_id).name
+        elif room.monster_id and self.monsters:
+            opponent_name = self.monsters.get(room.monster_id).name
+        elif room.p2_id and room.mode == "PvP":
+            opponent_name = self.players.get(room.p2_id).name
+        else:
+            opponent_name = self.chronicle.text("combat_unknown_opponent")
+
+        def record(player_id: str, won: bool | None, opponent: str) -> None:
+            outcome = "draw" if won is None else "victory" if won else "defeat"
+            self.chronicle.record_player(
+                player_id,
+                "combat",
+                self.chronicle.text(f"combat_{outcome}_title", opponent=opponent),
+                self.chronicle.text(f"combat_{outcome}_description", opponent=opponent),
+                emoji={"victory": "⚔", "defeat": "✕", "draw": "◇"}[outcome],
+                source_id=f"combat:{room.thread_id}:{player_id}",
+                details={
+                    "thread_id": room.thread_id,
+                    "outcome": outcome,
+                    "npc_id": room.npc_id,
+                    "monster_id": room.monster_id,
+                },
+            )
+
+        record(room.p1_id, player_won, opponent_name)
+        if room.mode == "PvP" and room.p2_id:
+            record(room.p2_id, None if player_won is None else not player_won, self.players.get(room.p1_id).name)
 
     def _persist_combat_resources(self, room: GameRoom, values: dict[str, Any], game_over: bool) -> None:
         self._persist_side(room.p1_id, "player", values, game_over)

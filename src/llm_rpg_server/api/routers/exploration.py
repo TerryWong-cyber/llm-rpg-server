@@ -152,6 +152,7 @@ def event_action(request: EventActionRequest, container: Container):
         request.event_id,
         request.action_id,
         request.item_id,
+        request.skill_id,
     )
     response = _map_response(container, request.player_id, outcome.current, None)
     response["interaction"] = outcome.interaction
@@ -224,6 +225,7 @@ def _player_payload(container: AppContainer, profile):
         "stamina": profile.stamina,
         "max_stamina": profile.max_stamina,
         "combat_statuses": [item.model_dump(mode="json") for item in profile.combat_statuses],
+        "exploration_effects": [item.model_dump(mode="json") for item in profile.exploration_effects],
         "inventory_items": profile.inventory.items,
         "last_camped_game_day": profile.last_camped_game_day,
         "sleep": profile.sleep.model_dump(mode="json") if profile.sleep else None,
@@ -242,6 +244,14 @@ def _event_payload(container: AppContainer, player_id: str):
         return None
     payload = event.model_dump(mode="json")
     eligible = container.world_events.item_options(player_id, event.event_id)
+    action_options = container.world_events.action_options(player_id, event.event_id)
+    visible_actions = []
     for action in payload.get("actions", []):
+        options = action_options.get(action["action_id"], {})
+        if options.get("visible", True) is False:
+            continue
         action["eligible_items"] = eligible.get(action["action_id"], [])
+        action["eligible_skills"] = options.get("eligible_skills", [])
+        visible_actions.append(action)
+    payload["actions"] = visible_actions
     return payload

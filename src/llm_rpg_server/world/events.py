@@ -10,6 +10,7 @@ from llm_rpg_server.exploration.models import WorldEventResult
 from llm_rpg_server.items import ItemService
 from llm_rpg_server.monsters import MonsterCatalog
 from llm_rpg_server.npcs import NPCInteractionService
+from llm_rpg_server.skills import SkillService
 
 
 @dataclass(slots=True)
@@ -30,12 +31,14 @@ class WorldEventCoordinator:
         monsters: MonsterCatalog,
         combat: CombatSessionService,
         items: ItemService,
+        skills: SkillService,
     ):
         self.exploration = exploration
         self.npcs = npcs
         self.monsters = monsters
         self.combat = combat
         self.items = items
+        self.skills = skills
         self._validate_references()
 
     def public_participant(self, rule: dict[str, Any]) -> dict[str, Any] | None:
@@ -61,11 +64,15 @@ class WorldEventCoordinator:
         event_id: str,
         action_id: str,
         item_id: str | None = None,
+        skill_id: str | None = None,
     ) -> EventInteractionOutcome:
         rule, action = self.exploration.validate_event_action(player_id, event_id, action_id)
         kind = action.get("kind", "narrative")
         interaction: dict[str, Any] = {"type": kind}
         room: GameRoom | None = None
+        required_states = list(map(str, action.get("state_requirements", [])))
+        if required_states and not self.skills.has_active_state(player_id, required_states):
+            raise ValueError(self.skills.content.text("errors.skill.event_state_missing"))
         if action.get("target_id") and kind in {"open_npc", "start_quest", "npc_combat"}:
             self.npcs.discover(action["target_id"], player_id)
 
@@ -78,6 +85,15 @@ class WorldEventCoordinator:
                 action.get("item_requirements", {}),
             )
             interaction.update({"item_id": item_id, "item_use": usage.model_dump(mode="json")})
+        elif kind == "use_skill":
+            if not skill_id:
+                raise ValueError(self.skills.content.text("errors.skill.event_skill_required"))
+            usage = self.skills.use_for_event(
+                player_id,
+                skill_id,
+                action.get("skill_requirements", {}),
+            )
+            interaction.update({"skill_id": skill_id, "skill_use": usage})
         elif kind == "open_npc":
             interaction["npc_id"] = action["target_id"]
         elif kind == "start_quest":
@@ -128,6 +144,22 @@ class WorldEventCoordinator:
             if action.get("kind") == "use_item"
         }
 
+    def action_options(self, player_id: str, event_id: str) -> dict[str, dict[str, Any]]:
+        rule = next((item for item in self.exploration.event_rules if item["event_id"] == event_id), None)
+        if rule is None:
+            return {}
+        result: dict[str, dict[str, Any]] = {}
+        for action in rule.get("actions", []):
+            required_states = list(map(str, action.get("state_requirements", [])))
+            visible = not required_states or self.skills.has_active_state(player_id, required_states)
+            result[action["action_id"]] = {
+                "visible": visible,
+                "eligible_skills": self.skills.event_options(
+                    player_id, action.get("skill_requirements", {})
+                ) if action.get("kind") == "use_skill" else [],
+            }
+        return result
+
     def _validate_references(self) -> None:
         npc_ids = {npc.npc_id for npc in self.npcs.repository.list_npcs()}
         monster_ids = {monster.monster_id for monster in self.monsters.list_all()}
@@ -159,3 +191,5 @@ class WorldEventCoordinator:
                     raise ValueError(f"World event {event_id} references an unknown monster")
                 if kind == "use_item" and not action.get("item_requirements"):
                     raise ValueError(f"World event {event_id} has item action without requirements")
+                if kind == "use_skill" and not action.get("skill_requirements"):
+                    raise ValueError(f"World event {event_id} has skill action without requirements")

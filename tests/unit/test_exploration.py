@@ -204,6 +204,21 @@ def test_world_clock_starts_at_year_zero_and_matches_time_conditions(content, ca
     assert not clock.matches({"periods": ["day"]}, snapshot)
 
 
+def test_shop_hours_are_open_from_six_until_midnight(content, catalog):
+    definition = content.document("maps/world.json")["time"]
+    epoch = datetime.fromisoformat(definition["epoch_utc"])
+    conditions = content.document("maps/world.json")["terrains"]["9"]["shop_conditions"]
+
+    def snapshot_at(hour: int):
+        seconds = hour * float(definition["real_seconds_per_game_hour"])
+        return WorldClock(definition, lambda: epoch + timedelta(seconds=seconds)).snapshot()
+
+    assert not WorldClock.matches(conditions, snapshot_at(5))
+    assert WorldClock.matches(conditions, snapshot_at(6))
+    assert WorldClock.matches(conditions, snapshot_at(23))
+    assert not WorldClock.matches(conditions, snapshot_at(24))
+
+
 def test_gather_rules_can_be_limited_to_specific_regions(content, catalog):
     players, player, service = create_service(content, catalog)
     current, _ = service.enter(player.player_id, "mistwood_small", seed=19)

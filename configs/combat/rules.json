@@ -48,6 +48,8 @@
     "fear": {"name": "恐惧", "base_chance": 0.65, "duration": 2, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["negative", "mental"], "attribute_multipliers": {"agility": 0.75, "luck": 0.7}},
     "stun": {"name": "昏迷", "base_chance": 0.5, "duration": 1, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["negative", "incapacitating"]},
     "root": {"name": "禁锢", "base_chance": 0.65, "duration": 2, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["negative", "movement_lock"], "attribute_multipliers": {"agility": 0.45}},
+    "arcane_guard": {"name": "奥术护盾", "base_chance": 1.0, "duration": 2, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["positive", "shield"], "attribute_multipliers": {"vitality": 1.15, "wisdom": 1.1}},
+    "moonstep": {"name": "月影步", "base_chance": 1.0, "duration": 3, "potency": 1, "max_stacks": 1, "persistent": false, "tags": ["positive", "evasion"], "attribute_multipliers": {"agility": 1.25, "luck": 1.1}},
     "well_fed": {"name": "饱食", "base_chance": 1.0, "duration": 3, "potency": 1, "max_stacks": 1, "persistent": true, "tags": ["positive", "food"], "attribute_multipliers": {"vitality": 1.08}}
   },
   "environment": {

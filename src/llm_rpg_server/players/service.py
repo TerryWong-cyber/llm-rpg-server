@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import TYPE_CHECKING
 
 from llm_rpg_server.catalog import Catalog
 from llm_rpg_server.shared.config import ContentProvider
@@ -8,12 +9,19 @@ from llm_rpg_server.shared.config import ContentProvider
 from .models import Inventory, PlayerProfile
 from .repository import PlayerRepository
 
+if TYPE_CHECKING:
+    from .chronicle import CharacterChronicleService
+
 
 class PlayerService:
     def __init__(self, repository: PlayerRepository, catalog: Catalog, content: ContentProvider):
         self.repository = repository
         self.catalog = catalog
         self.content = content
+        self.chronicle: CharacterChronicleService | None = None
+
+    def set_chronicle(self, chronicle: CharacterChronicleService) -> None:
+        self.chronicle = chronicle
 
     def create(self, name: str, race_id: str) -> PlayerProfile:
         if race_id not in self.catalog.races:
@@ -82,6 +90,21 @@ class PlayerService:
             equipped_armor_id=inventory.armors[0] if inventory.armors else None,
         )
         self.recalculate_resources(profile, restore_gains=True)
+        if self.chronicle is not None:
+            self.chronicle.record(
+                profile,
+                "origin",
+                self.chronicle.text("origin_title"),
+                self.chronicle.text(
+                    "origin_description",
+                    name=name,
+                    race_name=race["name"],
+                    birthplace=race["birthplace"]["settlement_name"],
+                ),
+                emoji="✦",
+                source_id=f"race:{race_id}",
+                details={"race_id": race_id},
+            )
         return profile
 
     def combat_character(self, profile: PlayerProfile) -> dict:

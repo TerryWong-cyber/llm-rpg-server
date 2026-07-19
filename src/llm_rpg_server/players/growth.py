@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -9,6 +10,9 @@ from llm_rpg_server.shared.config import ContentProvider
 from .models import PlayerProfile, QuestProgress
 from .repository import PlayerRepository
 from .service import PlayerService
+
+if TYPE_CHECKING:
+    from .chronicle import CharacterChronicleService
 
 
 class LevelCurve(BaseModel):
@@ -55,9 +59,23 @@ class GrowthService:
             content.document("progression/rules.json")
         )
         self.clock: Any | None = None
+        self._level_listener: Callable[[PlayerProfile], list[str]] | None = None
+        self._quest_skill_listener: Callable[[PlayerProfile, str, list[str]], list[str]] | None = None
+        self.chronicle: CharacterChronicleService | None = None
 
     def set_clock(self, clock: Any) -> None:
         self.clock = clock
+
+    def set_chronicle(self, chronicle: CharacterChronicleService) -> None:
+        self.chronicle = chronicle
+
+    def set_skill_listeners(
+        self,
+        level_listener: Callable[[PlayerProfile], list[str]],
+        quest_listener: Callable[[PlayerProfile, str, list[str]], list[str]],
+    ) -> None:
+        self._level_listener = level_listener
+        self._quest_skill_listener = quest_listener
 
     def _game_hour(self) -> int | None:
         return self.clock.snapshot().total_game_hours if self.clock is not None else None
@@ -78,6 +96,7 @@ class GrowthService:
         }
 
     def apply_experience(self, profile: PlayerProfile, amount: int) -> dict[str, Any]:
+        old_level = profile.level
         gained = max(0, int(amount))
         profile.experience += gained
         profile.total_experience += gained
@@ -97,12 +116,28 @@ class GrowthService:
                 self.experience_to_next(profile.level),
             )
         profile.experience_to_next = self.experience_to_next(profile.level)
-        return {
+        unlocked_skills = self._level_listener(profile) if self._level_listener else []
+        if levels_gained and self.chronicle is not None:
+            self.chronicle.record(
+                profile,
+                "growth",
+                self.chronicle.text("level_title", level=profile.level),
+                self.chronicle.text(
+                    "level_description", old_level=old_level, level=profile.level
+                ),
+                emoji="⬆",
+                source_id=f"level:{profile.level}",
+                details={"old_level": old_level, "level": profile.level},
+            )
+        result = {
             "experience": gained,
             "levels_gained": levels_gained,
             "level": profile.level,
             "attribute_points": profile.attribute_points,
         }
+        if unlocked_skills:
+            result["unlocked_skills"] = unlocked_skills
+        return result
 
     def award_once(
         self,
@@ -134,6 +169,23 @@ class GrowthService:
                 setattr(profile.attributes, name, getattr(profile.attributes, name) + amount)
             profile.attribute_points -= spent
             self.player_service.recalculate_resources(profile, restore_gains=True)
+            if self.chronicle is not None:
+                labels = {
+                    name: self.chronicle.text(f"attribute_{name}")
+                    for name in normalized
+                }
+                summary = "、".join(
+                    f"{labels[name]} +{amount}" for name, amount in normalized.items()
+                )
+                self.chronicle.record(
+                    profile,
+                    "growth",
+                    self.chronicle.text("attributes_title"),
+                    self.chronicle.text("attributes_description", allocations=summary),
+                    emoji="◆",
+                    source_id=f"attributes:{profile.total_experience}:{profile.attribute_points}",
+                    details={"allocations": normalized},
+                )
         return self.players.get(player_id)
 
     def start_quest(self, player_id: str, npc_id: str, hook: Any) -> None:
@@ -147,6 +199,7 @@ class GrowthService:
                 title=str(hook.title),
                 summary=str(hook.summary),
                 xp_reward=int(getattr(hook, "xp_reward", 0)),
+                skill_rewards=list(getattr(hook, "skill_rewards", [])),
                 requirements=[
                     requirement.model_dump(mode="json")
                     for requirement in getattr(hook, "requirements", [])
@@ -154,6 +207,16 @@ class GrowthService:
                 related_npc_ids=[npc_id],
                 started_game_hour=self._game_hour(),
             )
+            if self.chronicle is not None:
+                self.chronicle.record(
+                    profile,
+                    "quest",
+                    self.chronicle.text("quest_start_title", quest_title=hook.title),
+                    self.chronicle.text("quest_start_description", summary=hook.summary),
+                    emoji="📜",
+                    source_id=f"quest-start:{hook_id}",
+                    details={"hook_id": hook_id, "npc_id": npc_id},
+                )
 
     def complete_quest(self, player_id: str, npc_id: str, hook_id: str) -> dict[str, Any]:
         operation_id = f"quest_reward:{npc_id}:{hook_id}"
@@ -165,6 +228,13 @@ class GrowthService:
             self._require_quest_objectives(profile, quest)
             self._consume_quest_items(profile, quest)
             reward = self.apply_experience(profile, quest.xp_reward)
+            unlocked_skills = [
+                *reward.get("unlocked_skills", []),
+                *(self._quest_skill_listener(profile, hook_id, quest.skill_rewards)
+                  if self._quest_skill_listener else []),
+            ]
+            if unlocked_skills:
+                reward["unlocked_skills"] = unlocked_skills
             profile.active_quests.pop(hook_id, None)
             completed = quest.model_copy(deep=True)
             completed.status = "completed"
@@ -172,6 +242,18 @@ class GrowthService:
             profile.quest_history[hook_id] = completed
             if hook_id not in profile.completed_quests:
                 profile.completed_quests.append(hook_id)
+            if self.chronicle is not None:
+                self.chronicle.record(
+                    profile,
+                    "quest",
+                    self.chronicle.text("quest_complete_title", quest_title=quest.title),
+                    self.chronicle.text(
+                        "quest_complete_description", experience=quest.xp_reward
+                    ),
+                    emoji="✓",
+                    source_id=f"quest-complete:{hook_id}",
+                    details={"hook_id": hook_id, "experience": quest.xp_reward},
+                )
             return reward
 
         awarded, reward = self.players.update_once(player_id, operation_id, complete)

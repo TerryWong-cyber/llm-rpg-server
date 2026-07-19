@@ -87,10 +87,17 @@ class WorldEventAction(BaseModel):
     label: str
     style: Literal["primary", "quiet", "danger"] = "quiet"
     kind: Literal[
-        "narrative", "open_npc", "start_quest", "npc_combat", "monster_combat", "use_item"
+        "narrative",
+        "open_npc",
+        "start_quest",
+        "npc_combat",
+        "monster_combat",
+        "use_item",
+        "use_skill",
     ] = "narrative"
     forced: bool = False
     eligible_items: list[dict] = Field(default_factory=list)
+    eligible_skills: list[dict] = Field(default_factory=list)
 
 
 class WorldEventResult(BaseModel):

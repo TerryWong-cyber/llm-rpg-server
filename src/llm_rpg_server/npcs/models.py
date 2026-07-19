@@ -74,6 +74,7 @@ class StoryHook(BaseModel):
     min_trust: int = -100
     requires_memory_tags: list[str] = Field(default_factory=list)
     xp_reward: int = Field(default=100, ge=0)
+    skill_rewards: list[str] = Field(default_factory=list)
     requirements: list[QuestRequirement] = Field(default_factory=list)
 
 

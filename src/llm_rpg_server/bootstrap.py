@@ -18,6 +18,7 @@ from llm_rpg_server.monsters import MonsterCatalog
 from llm_rpg_server.npcs import InMemoryWorldRepository, NPCDialogueService, NPCInteractionService
 from llm_rpg_server.npcs.loader import seed_npcs
 from llm_rpg_server.players import (
+    CharacterChronicleService,
     EconomyService,
     GrowthService,
     InMemoryPlayerRepository,
@@ -27,6 +28,7 @@ from llm_rpg_server.players import (
 from llm_rpg_server.shared.config import LocalContentProvider, Settings
 from llm_rpg_server.shared.llm import create_llm
 from llm_rpg_server.shared.observability import Observability
+from llm_rpg_server.skills import SkillCatalog, SkillService
 from llm_rpg_server.world import EncounterService
 from llm_rpg_server.world.events import WorldEventCoordinator
 
@@ -38,9 +40,12 @@ class AppContainer:
     catalog: Catalog
     players: InMemoryPlayerRepository
     player_service: PlayerService
+    chronicle: CharacterChronicleService
     growth: GrowthService
     economy: EconomyService
     items: ItemService
+    skill_catalog: SkillCatalog
+    skills: SkillService
     world_repository: InMemoryWorldRepository
     npc_interactions: NPCInteractionService
     exploration: ExplorationService
@@ -66,6 +71,9 @@ def build_container() -> AppContainer:
     growth = GrowthService(players, player_service, content)
     economy = EconomyService(players, catalog, content)
     items = ItemService(players, catalog, content)
+    skill_catalog = SkillCatalog(content)
+    skills = SkillService(players, skill_catalog, catalog, content)
+    growth.set_skill_listeners(skills.apply_level_unlocks, skills.grant_quest_rewards)
     llm = create_llm(settings)
     world_repository = InMemoryWorldRepository()
     seed_npcs(world_repository, content)
@@ -73,6 +81,12 @@ def build_container() -> AppContainer:
     npc_interactions = NPCInteractionService(world_repository, npc_dialogue, content, players)
     npc_interactions.set_story_hook_listener(growth.start_quest)
     exploration = ExplorationService(players, catalog, content)
+    exploration.add_event_rules(skill_catalog.world_events())
+    chronicle = CharacterChronicleService(players, content, exploration.clock)
+    player_service.set_chronicle(chronicle)
+    growth.set_chronicle(chronicle)
+    skills.set_chronicle(chronicle)
+    exploration.set_chronicle(chronicle)
     growth.set_clock(exploration.clock)
     resources = ResourceLifecycleService(players, exploration.clock)
     exploration.set_resource_lifecycle(resources)
@@ -98,6 +112,7 @@ def build_container() -> AppContainer:
         growth,
         content,
         llm,
+        skills,
         world_clock=exploration.clock,
     )
     combat = CombatSessionService(
@@ -111,8 +126,10 @@ def build_container() -> AppContainer:
         growth,
         monsters,
         resources,
+        skills,
+        chronicle,
     )
-    world_events = WorldEventCoordinator(exploration, npc_interactions, monsters, combat, items)
+    world_events = WorldEventCoordinator(exploration, npc_interactions, monsters, combat, items, skills)
     exploration.set_event_participant_resolver(world_events)
     container = AppContainer(
         settings=settings,
@@ -120,9 +137,12 @@ def build_container() -> AppContainer:
         catalog=catalog,
         players=players,
         player_service=player_service,
+        chronicle=chronicle,
         growth=growth,
         economy=economy,
         items=items,
+        skill_catalog=skill_catalog,
+        skills=skills,
         world_repository=world_repository,
         npc_interactions=npc_interactions,
         exploration=exploration,
@@ -142,6 +162,11 @@ def build_container() -> AppContainer:
 
 def validate_references(container: AppContainer) -> None:
     catalog = container.catalog
+    skill_ids = set(container.skill_catalog.rules.skills)
+    for item_id, item in catalog.items.items():
+        learned_skill = item.get("learn_skill_id")
+        if learned_skill and learned_skill not in skill_ids:
+            raise ValueError(f"Skill book {item_id} references unknown skill {learned_skill}")
     for npc in container.world_repository.list_npcs():
         equipment = npc.equipment
         if equipment.weapon_id and equipment.weapon_id not in catalog.weapons:
@@ -158,6 +183,11 @@ def validate_references(container: AppContainer) -> None:
         ):
             raise ValueError(f"NPC {npc.npc_id} has an invalid combat profile")
         for hook in npc.story_hooks:
+            missing_skill_rewards = set(hook.skill_rewards) - skill_ids
+            if missing_skill_rewards:
+                raise ValueError(
+                    f"Quest {hook.hook_id} references unknown skills: {sorted(missing_skill_rewards)}"
+                )
             for requirement in hook.requirements:
                 if requirement.kind == "region" and requirement.region_id not in container.exploration.regions:
                     raise ValueError(
@@ -174,6 +204,9 @@ def validate_references(container: AppContainer) -> None:
                             f"Quest {hook.hook_id} references unknown item {requirement.item_id}"
                         )
     npc_ids = {npc.npc_id for npc in container.world_repository.list_npcs()}
+    missing_trainers = set(container.skill_catalog.rules.trainers) - npc_ids
+    if missing_trainers:
+        raise ValueError(f"Skill trainers reference unknown NPCs: {sorted(missing_trainers)}")
     for rule in container.encounters.rules:
         if rule.npc_id not in npc_ids:
             raise ValueError(f"Encounter {rule.encounter_id} references unknown NPC {rule.npc_id}")

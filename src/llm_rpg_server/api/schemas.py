@@ -73,11 +73,33 @@ class EventActionRequest(BaseModel):
     event_id: str
     action_id: str
     item_id: str | None = None
+    skill_id: str | None = None
 
 
 class UseItemRequest(BaseModel):
     player_id: str
     item_id: str
+
+
+class SkillBookRequest(BaseModel):
+    player_id: str
+    item_id: str
+
+
+class SkillEquipRequest(BaseModel):
+    player_id: str
+    skill_ids: list[str] = Field(default_factory=list)
+
+
+class SkillCastRequest(BaseModel):
+    player_id: str
+    skill_id: str
+
+
+class TrainerLearnRequest(BaseModel):
+    player_id: str
+    npc_id: str
+    skill_id: str
 
 
 class RoomJoinRequest(BaseModel):
