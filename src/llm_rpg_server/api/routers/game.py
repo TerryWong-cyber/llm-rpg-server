@@ -158,6 +158,8 @@ def craft_item(request: CraftRequest, container: Container):
             "status": "failed",
             "result": None,
             "failure_reason": attempt.failure_reason,
+            "duration_ms": attempt.duration_ms,
+            "recipe_cached": attempt.recipe_cached,
             "profile": profile.model_dump(mode="json"),
         }
     result = attempt.result
@@ -167,6 +169,8 @@ def craft_item(request: CraftRequest, container: Container):
         "status": "success",
         "result": result.public_dict(),
         "failure_reason": "",
+        "duration_ms": attempt.duration_ms,
+        "recipe_cached": attempt.recipe_cached,
         "profile": profile.model_dump(mode="json"),
     }
 

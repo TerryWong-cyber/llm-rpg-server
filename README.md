@@ -45,9 +45,26 @@ The legacy command `uvicorn server:app_api --reload` remains available through t
 
 Run `python scripts/validate_content.py` after changing content. The provider boundary can later be backed by Langfuse or another content API without changing domain services.
 
-## Crafting rules
+## Crafting workflow and rules
 
-Crafting uses a deterministic rule layer around a structured LLM decision. The server validates ownership, material eligibility, equipment retention, and recursive ingredient ancestry before asking the model to judge whether the combination has a coherent transformation path. Successful results expose `can_be_ingredient`; generated items also retain internal ancestry metadata so they cannot be combined with any direct or transitive ingredient.
+Crafting validates ownership, material eligibility, equipment retention, and recursive ingredient ancestry before the LangGraph workflow begins. The graph has a content-only concept node (coherent transformation, name, description, category), then runs artwork fusion and category-specific property generation in parallel before assembling and atomically committing the result. A concept marked incompatible ends the graph without consuming inventory and retains the reason in the failed-recipe catalogue.
+
+`configs/crafting/categories.json` is the category registry. It maps each allowed category to an inventory type, its versioned property prompt, fixed use contexts, and numeric/enum constraints. The model proposes only a structured property candidate; the server discards undeclared fields and clamps every declared value before it can affect combat, recovery, or inventory behavior.
+
+Artwork uses the separate Flux image task service. It first uploads a source icon to OSS when a catalogue item only has a local `/assets/...` reference, submits the two OSS keys to `/api/v1/task/edit`, polls the task status, and persists only the resulting `image_key` on the crafted item. If generation or polling fails, the server creates a diagonal split composite from the two source images and uploads that to the same bucket instead.
+
+Configure the production service with these environment variables:
+
+```text
+CRAFT_IMAGE_SERVICE_URL=http://image-service:60668
+CRAFT_OSS_BASE_URL=https://oss.toolup.cn
+CRAFT_OSS_BUCKET=your-game-assets-bucket
+CRAFT_WEB_ASSETS_ROOT=/path/to/llm-rpg-web/public
+CRAFT_IMAGE_TIMEOUT_SECONDS=120
+CRAFT_IMAGE_POLL_INTERVAL_SECONDS=2
+```
+
+The web client needs matching build-time values `VITE_RPG_OSS_BASE` and `VITE_RPG_OSS_BUCKET`. It resolves `image_key` to the OSS file endpoint and stores successfully fetched images in browser Cache Storage (backed by the browser's local disk); CORS failure falls back to direct OSS image loading.
 
 Both successful and failed unordered ingredient pairs are stored in the shared recipe repository. Failed attempts do not consume inventory and reuse the recorded reason on later attempts, avoiding another model call. `GET /api/game/recipes` returns both outcomes through `success`, nullable `result`, and `failure_reason`. The current repository is process-local, matching the existing in-memory player and catalog lifecycle.
 

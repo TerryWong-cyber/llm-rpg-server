@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import time
 import uuid
 from typing import Any
 
@@ -8,32 +9,33 @@ from llm_rpg_server.catalog import Catalog
 from llm_rpg_server.players import PlayerProfile, PlayerRepository
 from llm_rpg_server.shared.config import ContentProvider
 
-from .generators import CraftDecisionGenerator, ItemImageGenerator
-from .models import CraftAttempt, CraftResult, ItemReference, RecipeRecord
+from .models import CraftAttempt, CraftDraft, CraftResult, ItemReference, RecipeRecord
 from .repository import InMemoryRecipeRepository, recipe_key
+from .workflow import CraftingWorkflow
 
 STACKABLE_ITEM_TYPES = {"item", "material"}
 
 
 class CraftingService:
+    """Transactional facade around the LangGraph crafting workflow."""
+
     def __init__(
         self,
         players: PlayerRepository,
         catalog: Catalog,
         recipes: InMemoryRecipeRepository,
         content: ContentProvider,
-        decision_generator: CraftDecisionGenerator,
-        image_generator: ItemImageGenerator,
+        workflow: CraftingWorkflow,
     ):
         self.players = players
         self.catalog = catalog
         self.recipes = recipes
         self.content = content
-        self.decision_generator = decision_generator
-        self.image_generator = image_generator
+        self.workflow = workflow
         self.generated_items = content.document("catalog/generated_items.json")
 
     def craft(self, player_id: str, first: ItemReference, second: ItemReference) -> CraftAttempt:
+        started_at = time.perf_counter()
         profile = self.players.get(player_id)
         first_info = self._validate_reference(profile, first)
         second_info = self._validate_reference(profile, second)
@@ -42,13 +44,22 @@ class CraftingService:
         cached = self.recipes.get(key)
         if cached:
             if not cached.success or cached.result is None:
-                return CraftAttempt(success=False, failure_reason=cached.failure_reason)
+                return CraftAttempt(
+                    success=False,
+                    failure_reason=cached.failure_reason,
+                    duration_ms=self._elapsed_ms(started_at),
+                    recipe_cached=True,
+                )
             result = self._instantiate_cached_result(cached.result)
         else:
             record = self._evaluate(first, second, first_info, second_info)
             if not record.success or record.result is None:
                 saved = self.recipes.save(key, record)
-                return CraftAttempt(success=False, failure_reason=saved.failure_reason)
+                return CraftAttempt(
+                    success=False,
+                    failure_reason=saved.failure_reason,
+                    duration_ms=self._elapsed_ms(started_at),
+                )
             result = record.result
         with self.players.transaction(player_id) as current:
             current_first = self._validate_reference(current, first)
@@ -64,10 +75,16 @@ class CraftingService:
                     ingredients=self._ordered_pair(first, second),
                     success=True,
                     result=result,
+                    duration_ms=record.duration_ms,
                 ),
             )
         self.catalog.register_generated(result.item_type, result.id, self._catalog_definition(result))
-        return CraftAttempt(success=True, result=result)
+        return CraftAttempt(
+            success=True,
+            result=result,
+            duration_ms=self._elapsed_ms(started_at),
+            recipe_cached=cached is not None,
+        )
 
     def _evaluate(
         self,
@@ -76,29 +93,58 @@ class CraftingService:
         first: dict[str, Any],
         second: dict[str, Any],
     ) -> RecipeRecord:
+        started_at = time.perf_counter()
         item_type = self._result_type(first_reference.item_type, second_reference.item_type)
         ingredients = self._ordered_pair(first_reference, second_reference)
-        decision = self.decision_generator.evaluate(first, second, item_type)
-        if not decision.success:
+        outcome = self.workflow.run(first, second, item_type)
+        if not outcome.success or outcome.draft is None:
             return RecipeRecord(
                 ingredients=ingredients,
                 success=False,
-                failure_reason=decision.reason.strip(),
+                failure_reason=outcome.failure_reason,
+                duration_ms=self._elapsed_ms(started_at),
             )
-        value = int(first.get("value", 0)) + int(second.get("value", 0))
-        combat_stat = self._combat_stat(item_type, first, second)
-        result = CraftResult(
+        result = self._result_from_draft(
+            outcome.draft,
+            ingredients,
+            first_reference,
+            second_reference,
+            first,
+            second,
+        )
+        return RecipeRecord(
+            ingredients=ingredients,
+            success=True,
+            result=result,
+            duration_ms=self._elapsed_ms(started_at),
+        )
+
+    def _result_from_draft(
+        self,
+        draft: CraftDraft,
+        ingredients: tuple[ItemReference, ItemReference],
+        first_reference: ItemReference,
+        second_reference: ItemReference,
+        first: dict[str, Any],
+        second: dict[str, Any],
+    ) -> CraftResult:
+        item_type = draft.properties.item_type
+        return CraftResult(
             id=self._result_item_id(item_type, ingredients),
-            name=decision.name.strip(),
-            desc=decision.desc.strip(),
-            value=value,
+            name=draft.concept.name.strip(),
+            desc=draft.concept.desc.strip(),
+            value=max(0, int(first.get("value", 0)) + int(second.get("value", 0))),
             item_type=item_type,
-            combat_stat=combat_stat,
-            can_be_ingredient=decision.can_be_ingredient,
-            tradable=decision.tradable,
-            use_contexts=(decision.use_contexts if item_type == "item" else []),
-            category=(decision.category.strip().lower() or item_type),
-            tags=sorted({tag.strip().lower() for tag in decision.tags if tag.strip()})[:8],
+            combat_stat=self._combat_stat(item_type, draft.properties.properties),
+            image_url=draft.artwork.image_url,
+            image_key=draft.artwork.image_key,
+            image_status=draft.artwork.status,
+            can_be_ingredient=draft.properties.can_be_ingredient,
+            tradable=draft.properties.tradable,
+            use_contexts=draft.properties.use_contexts,
+            category=draft.properties.category,
+            tags=draft.properties.tags,
+            properties=draft.properties.properties,
             ingredient_ancestry=self._ingredient_ancestry(
                 first_reference,
                 second_reference,
@@ -106,8 +152,10 @@ class CraftingService:
                 second,
             ),
         )
-        result = result.model_copy(update={"image_url": self.image_generator.generate(result.name, result.desc)})
-        return RecipeRecord(ingredients=ingredients, success=True, result=result)
+
+    @staticmethod
+    def _elapsed_ms(started_at: float) -> int:
+        return max(0, round((time.perf_counter() - started_at) * 1000))
 
     def _validate_reference(self, profile: PlayerProfile, reference: ItemReference) -> dict[str, Any]:
         inventory = profile.inventory
@@ -199,6 +247,8 @@ class CraftingService:
             "value": result.value,
             "desc": result.desc,
             "image_url": result.image_url,
+            "image_key": result.image_key,
+            "image_status": result.image_status,
             "can_be_ingredient": result.can_be_ingredient,
             "tradable": result.tradable,
             "use_contexts": result.use_contexts,
@@ -206,27 +256,40 @@ class CraftingService:
             "tags": result.tags,
             "_crafting_ancestry": [reference.model_dump(mode="json") for reference in result.ingredient_ancestry],
         }
+        properties = result.properties
         if result.item_type == "weapon":
             weapon = self.generated_items["weapon"]
             common.update({
-                "base_dmg": result.combat_stat,
-                "range": weapon["range"],
-                "type": weapon["damage_type"],
+                "base_dmg": int(properties.get("base_dmg", result.combat_stat)),
+                "range": str(properties.get("range", weapon["range"])),
+                "type": str(properties.get("damage_type", weapon["damage_type"])),
                 "skills": [dict(weapon["skill"])],
             })
         elif result.item_type == "armor":
             common.update({
-                "hp_bonus": result.combat_stat,
-                "def_rate": self.generated_items["armor"]["def_rate"],
+                "hp_bonus": int(properties.get("hp_bonus", result.combat_stat)),
+                "def_rate": float(properties.get("def_rate", self.generated_items["armor"]["def_rate"])),
             })
         elif result.item_type == "item":
             common.update({
-                "type": self.generated_items["item"]["effect_type"],
-                "val": result.combat_stat,
+                "type": str(properties.get("effect_type", self.generated_items["item"]["effect_type"])),
+                "val": int(properties.get("val", result.combat_stat)),
+                "stamina_restore": int(properties.get("stamina_restore", 0)),
+                "clear_negative_statuses": bool(properties.get("clear_negative_statuses", False)),
             })
         else:
             common.update({"emoji": self.generated_items["material"]["emoji"]})
         return common
+
+    @staticmethod
+    def _combat_stat(item_type: str, properties: dict[str, Any]) -> int:
+        if item_type == "weapon":
+            return max(0, int(properties.get("base_dmg", 0)))
+        if item_type == "armor":
+            return max(0, int(properties.get("hp_bonus", 0)))
+        if item_type == "item":
+            return max(0, int(properties.get("val", 0)))
+        return 0
 
     @staticmethod
     def _new_item_id() -> str:
@@ -282,14 +345,3 @@ class CraftingService:
         if "item" in types:
             return "item"
         return "material"
-
-    def _combat_stat(self, item_type: str, first: dict[str, Any], second: dict[str, Any]) -> int:
-        if item_type == "material":
-            return 0
-        source_keys = {"weapon": "base_dmg", "armor": "hp_bonus", "item": "val"}
-        limits = self.generated_items["combat_stat_limits"]
-        key = source_keys[item_type]
-        values = [int(item.get(key, 0)) for item in (first, second) if item.get(key) is not None]
-        estimate = sum(values) if values else limits[item_type][0]
-        lower, upper = (int(value) for value in limits[item_type])
-        return max(lower, min(upper, estimate))

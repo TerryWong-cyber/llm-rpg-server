@@ -1,62 +1,110 @@
 from __future__ import annotations
 
+import json
 from typing import Any, Protocol
 
-from llm_rpg_server.shared.config import ContentProvider, Settings
+from llm_rpg_server.shared.config import ContentProvider
 
-from .models import CraftDecision
-
-
-class CraftDecisionGenerator(Protocol):
-    def evaluate(self, first: dict[str, Any], second: dict[str, Any], result_type: str) -> CraftDecision: ...
+from .categories import CraftCategoryCatalog
+from .models import CraftConcept, CraftDecision, CraftPropertyProposal, ItemType
 
 
-class ItemImageGenerator(Protocol):
-    def generate(self, name: str, description: str) -> str: ...
+class CraftConceptGenerator(Protocol):
+    def generate(
+        self,
+        first: dict[str, Any],
+        second: dict[str, Any],
+        result_type: ItemType,
+        allowed_categories: list[str],
+    ) -> CraftConcept: ...
 
 
-class LLMCraftDecisionGenerator:
+class CraftPropertyGenerator(Protocol):
+    def generate(
+        self,
+        first: dict[str, Any],
+        second: dict[str, Any],
+        concept: CraftConcept,
+        property_contract: str,
+        prompt_id: str,
+    ) -> CraftPropertyProposal: ...
+
+
+class LLMCraftConceptGenerator:
+    """The content-only first node. It cannot set game mechanics or assets."""
+
     def __init__(self, content: ContentProvider, llm: Any):
         self.content = content
         self.llm = llm
 
-    def evaluate(self, first: dict[str, Any], second: dict[str, Any], result_type: str) -> CraftDecision:
+    def generate(
+        self,
+        first: dict[str, Any],
+        second: dict[str, Any],
+        result_type: ItemType,
+        allowed_categories: list[str],
+    ) -> CraftConcept:
         from langchain_core.prompts import ChatPromptTemplate
 
-        definition = self.content.prompt("crafting")
+        definition = self.content.prompt("crafting_concept")
         prompt = ChatPromptTemplate.from_messages([("system", definition.system), ("human", definition.user)])
-        chain = prompt | self.llm.with_structured_output(CraftDecision)
+        chain = prompt | self.llm.with_structured_output(CraftConcept)
         return chain.invoke({
             "item1_type": first["_crafting_type"],
             "item1_name": first["name"],
             "item1_description": first.get("desc", ""),
-            "item1_value": first.get("value", 0),
             "item2_type": second["_crafting_type"],
             "item2_name": second["name"],
             "item2_description": second.get("desc", ""),
-            "item2_value": second.get("value", 0),
             "result_type": result_type,
+            "allowed_categories": ", ".join(allowed_categories),
         })
 
 
-class OpenAIItemImageGenerator:
-    def __init__(self, content: ContentProvider, settings: Settings):
+class LLMCraftPropertyGenerator:
+    """The third node. It proposes category fields that config clamps afterwards."""
+
+    def __init__(self, content: ContentProvider, categories: CraftCategoryCatalog, llm: Any):
         self.content = content
-        self.settings = settings
+        self.categories = categories
+        self.llm = llm
 
-    def generate(self, name: str, description: str) -> str:
-        prompt = self.content.text("crafting.image_prompt", name=name, description=description)
-        try:
-            from openai import OpenAI
+    def generate(
+        self,
+        first: dict[str, Any],
+        second: dict[str, Any],
+        concept: CraftConcept,
+        property_contract: str,
+        prompt_id: str,
+    ) -> CraftPropertyProposal:
+        from langchain_core.prompts import ChatPromptTemplate
 
-            client = OpenAI(api_key=self.settings.openai_api_key, base_url=self.settings.openai_base_url)
-            response = client.images.generate(
-                model=self.settings.image_model,
-                prompt=prompt,
-                size="1024x1024",
-                quality="standard",
-                n=1,
-            )
-            return response.data[0].url or ""
-        except Exception:
-            return self.content.text("crafting.placeholder_url", name=name)
+        definition = self.content.prompt(prompt_id)
+        prompt = ChatPromptTemplate.from_messages([("system", definition.system), ("human", definition.user)])
+        chain = prompt | self.llm.with_structured_output(CraftPropertyProposal)
+        return chain.invoke({
+            "name": concept.name,
+            "description": concept.desc,
+            "category": concept.category,
+            "ingredients": json.dumps([_ingredient_view(first), _ingredient_view(second)], ensure_ascii=False),
+            "property_contract": property_contract,
+        })
+
+
+class LLMCraftDecisionGenerator(LLMCraftConceptGenerator):
+    """Compatibility facade for integrations still importing the previous class."""
+
+    def evaluate(self, first: dict[str, Any], second: dict[str, Any], result_type: str) -> CraftDecision:
+        categories = [result_type]
+        concept = self.generate(first, second, result_type, categories)  # type: ignore[arg-type]
+        return CraftDecision.model_validate(concept.model_dump())
+
+
+def _ingredient_view(definition: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": definition.get("_crafting_type", "material"),
+        "name": definition.get("name", ""),
+        "description": definition.get("desc", ""),
+        "category": definition.get("category", ""),
+        "tags": list(definition.get("tags", [])),
+    }

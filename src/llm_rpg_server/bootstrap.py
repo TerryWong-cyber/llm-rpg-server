@@ -7,10 +7,13 @@ from dotenv import load_dotenv
 from llm_rpg_server.catalog import Catalog
 from llm_rpg_server.combat import CombatEngine, CombatSessionService, InMemoryRoomRepository
 from llm_rpg_server.crafting import (
+    CraftCategoryCatalog,
     CraftingService,
+    CraftingWorkflow,
     InMemoryRecipeRepository,
-    LLMCraftDecisionGenerator,
-    OpenAIItemImageGenerator,
+    LLMCraftConceptGenerator,
+    LLMCraftPropertyGenerator,
+    OssCraftArtworkGenerator,
 )
 from llm_rpg_server.exploration import ExplorationService
 from llm_rpg_server.items import ItemService
@@ -95,13 +98,19 @@ def build_container() -> AppContainer:
     exploration.set_encounter_resolver(encounters)
     economy.set_access_policy(exploration)
     recipes = InMemoryRecipeRepository()
+    crafting_categories = CraftCategoryCatalog(content)
+    crafting_workflow = CraftingWorkflow(
+        crafting_categories,
+        LLMCraftConceptGenerator(content, llm),
+        OssCraftArtworkGenerator(content, settings),
+        LLMCraftPropertyGenerator(content, crafting_categories, llm),
+    )
     crafting = CraftingService(
         players,
         catalog,
         recipes,
         content,
-        LLMCraftDecisionGenerator(content, llm),
-        OpenAIItemImageGenerator(content, settings),
+        crafting_workflow,
     )
     rooms = InMemoryRoomRepository()
     observability = Observability()

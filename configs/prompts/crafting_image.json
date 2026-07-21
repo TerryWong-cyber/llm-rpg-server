@@ -1,0 +1,6 @@
+{
+  "prompt_id": "crafting_image",
+  "version": "1.0.0",
+  "system": "Create one clean fantasy RPG inventory icon from the supplied ingredient images. Preserve recognizable visual motifs from both inputs, but transform them into one coherent crafted object. Centered single object, transparent or simple dark background, no text, no letters, no watermark, no frame, high readability at small sizes.",
+  "user": "Crafted item name: {name}. Description: {description}. Category: {category}."
+}

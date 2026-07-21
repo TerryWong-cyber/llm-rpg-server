@@ -546,8 +546,8 @@
     "status_dmg_per_turn": 6,
     "normal_effectiveness": 5,
     "defended_effectiveness": 2,
-    "min_gold_drop": 30,
+    "min_gold_drop": 20,
     "max_gold_drop": 60,
-    "initial_gold": 100
+    "initial_gold": 10000
   }
 }

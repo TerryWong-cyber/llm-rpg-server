@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "categories": {
+    "weapon": {
+      "item_type": "weapon",
+      "prompt_id": "crafting_properties_weapon",
+      "use_contexts": [],
+      "property_rules": {
+        "base_dmg": {"kind": "integer", "minimum": 10, "maximum": 40, "default": 18},
+        "damage_type": {"kind": "enum", "choices": ["phys", "magic"], "default": "phys"},
+        "range": {"kind": "enum", "choices": ["近战", "远程"], "default": "近战"}
+      }
+    },
+    "armor": {
+      "item_type": "armor",
+      "prompt_id": "crafting_properties_armor",
+      "use_contexts": [],
+      "property_rules": {
+        "hp_bonus": {"kind": "integer", "minimum": 10, "maximum": 50, "default": 20},
+        "def_rate": {"kind": "number", "minimum": 0.1, "maximum": 0.3, "default": 0.15}
+      }
+    },
+    "potion": {
+      "item_type": "item",
+      "prompt_id": "crafting_properties_potion",
+      "use_contexts": ["combat", "exploration"],
+      "property_rules": {
+        "effect_type": {"kind": "enum", "choices": ["heal_hp", "heal_mp", "heal_both"], "default": "heal_hp"},
+        "val": {"kind": "integer", "minimum": 20, "maximum": 100, "default": 40},
+        "stamina_restore": {"kind": "integer", "minimum": 0, "maximum": 60, "default": 0},
+        "clear_negative_statuses": {"kind": "boolean", "default": false}
+      }
+    },
+    "food": {
+      "item_type": "item",
+      "prompt_id": "crafting_properties_food",
+      "use_contexts": ["exploration"],
+      "property_rules": {
+        "effect_type": {"kind": "enum", "choices": ["heal_hp", "heal_both"], "default": "heal_hp"},
+        "val": {"kind": "integer", "minimum": 10, "maximum": 70, "default": 25},
+        "stamina_restore": {"kind": "integer", "minimum": 10, "maximum": 80, "default": 30},
+        "clear_negative_statuses": {"kind": "boolean", "default": false}
+      }
+    },
+    "bomb": {
+      "item_type": "item",
+      "prompt_id": "crafting_properties_bomb",
+      "use_contexts": ["combat"],
+      "property_rules": {
+        "effect_type": {"kind": "enum", "choices": ["dmg"], "default": "dmg"},
+        "val": {"kind": "integer", "minimum": 20, "maximum": 100, "default": 45},
+        "stamina_restore": {"kind": "integer", "minimum": 0, "maximum": 0, "default": 0},
+        "clear_negative_statuses": {"kind": "boolean", "default": false}
+      }
+    },
+    "utility": {
+      "item_type": "item",
+      "prompt_id": "crafting_properties_utility",
+      "use_contexts": ["world_event"],
+      "property_rules": {
+        "effect_type": {"kind": "enum", "choices": ["heal_hp"], "default": "heal_hp"},
+        "val": {"kind": "integer", "minimum": 0, "maximum": 30, "default": 0},
+        "stamina_restore": {"kind": "integer", "minimum": 0, "maximum": 30, "default": 0},
+        "clear_negative_statuses": {"kind": "boolean", "default": false}
+      }
+    },
+    "refined_material": {
+      "item_type": "material",
+      "prompt_id": "crafting_properties_material",
+      "use_contexts": [],
+      "property_rules": {}
+    },
+    "arcane_material": {
+      "item_type": "material",
+      "prompt_id": "crafting_properties_material",
+      "use_contexts": [],
+      "property_rules": {}
+    }
+  }
+}
